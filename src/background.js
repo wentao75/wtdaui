@@ -11,7 +11,8 @@ import {
     readStockList,
     // readStockIndexList,
     stockDataNames
-} from "@wt/lib-wtda";
+} from "@wt/lib-wtda-query";
+
 // const stockData = require("@wt/lib-wtda");
 //     readStockData,
 //     readStockList,
@@ -33,8 +34,9 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
     // Create the browser window.
     win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1200,
+        height: 910,
+        useContentSize: true,
         webPreferences: {
             nodeIntegration: true
         }

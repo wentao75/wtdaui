@@ -16,6 +16,8 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "echarts": "^4.8.0",
+    "electron-log": "^4.2.0",
+    "electron-store": "^5.1.1",
     "element-ui": "^2.4.5",
     "lodash": "^4.17.15",
     "moment": "^2.26.0",

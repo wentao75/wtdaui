@@ -1,15 +1,32 @@
 <template>
-    <div id="graph" :style="graphStyle"></div>
+    <el-container>
+        <el-header
+            ><el-autocomplete
+                placeholder="请输入股票代码"
+                v-model="graphTsCode"
+                :fetch-suggestions="queryStockCode"
+                @select="handleSelect"
+                clearable
+            ></el-autocomplete
+        ></el-header>
+        <el-main v-loading="loading || !$store.state.initDataFinished">
+            <div id="graph" :style="graphStyle"></div>
+        </el-main>
+    </el-container>
 </template>
 
 <script>
 import { ipcRenderer } from "electron";
+import _ from "lodash";
+import log from "electron-log";
 // import moment from "moment";
 
 export default {
     name: "TrendGraph",
     data() {
         return {
+            loading: false,
+            graphTsCode: this.tsCode,
             downColor: "#00da3c",
             upColor: "#ec0000",
             dailyData: [],
@@ -20,10 +37,29 @@ export default {
             }
         };
     },
+    watch: {
+        graphTsCode: function() {
+            this.debouncedRefreshGraph();
+        }
+    },
     props: {
         tsCode: String
     },
     methods: {
+        refreshGraph: function() {
+            if (
+                this.$store.state.initDataFinished &&
+                !_.isEmpty(this.graphTsCode) &&
+                /^\d{6}\..{2}$/.test(this.graphTsCode)
+            ) {
+                console.log(`${this.graphTsCode} 测试通过！`);
+                this.loading = true;
+                ipcRenderer.send("data-stock-read", {
+                    name: "stockTrend",
+                    tsCode: this.graphTsCode // this.$route.params.tsCode
+                });
+            }
+        },
         splitData: function(stockData) {
             var categoryData = [];
             var values = [];
@@ -63,41 +99,28 @@ export default {
                 info: stockData.info
             };
         },
-        dataReady(event, rawData) {
-            let graphElement = document.getElementById("graph");
-
-            if (this.dailyChart) {
-                this.dailyChart.clear();
-                this.dailyChart.dispose();
+        getGraphOption(data) {
+            // 这里需要计算一下zoom的显示范围
+            let dataLen = data && data.values ? data.values.length : 0;
+            let start = 300 / dataLen;
+            if (start >= 1) {
+                start = 0;
+            } else {
+                start = 100 - Number((start * 100).toFixed(2));
             }
-            this.dailyChart = this.echarts.init(graphElement);
-            this.dailyChart.resize();
-
-            window.addEventListener("resize", () => {
-                this.dailyChart.resize();
-            });
-
-            this.dailyData = rawData;
-            console.log(
-                `日线数据长度：${this.dailyData &&
-                    this.dailyData.data &&
-                    this.dailyData.data.length}`
-            );
-
-            let data = this.splitData(this.dailyData);
-            let option = {
+            return {
                 title: {
                     text:
                         data &&
                         data.info &&
                         data.info.ts_code + " " + data.info.name, //"K线图",
-                    left: 20
+                    left: "5%"
                 },
                 backgroundColor: "#fff",
                 animation: false,
                 legend: {
                     // bottom: 10,
-                    left: "center",
+                    right: "5%",
                     data: ["日K线", "短期趋势", "中期趋势", "长期趋势"]
                 },
                 tooltip: {
@@ -171,13 +194,13 @@ export default {
                 },
                 grid: [
                     {
-                        left: "10%",
-                        right: "8%",
+                        left: "5%",
+                        right: "5%",
                         height: "50%"
                     },
                     {
-                        left: "10%",
-                        right: "8%",
+                        left: "5%",
+                        right: "5%",
                         top: "63%",
                         height: "21%"
                     }
@@ -233,7 +256,7 @@ export default {
                     {
                         type: "inside",
                         xAxisIndex: [0, 1],
-                        start: 98,
+                        start: start,
                         end: 100
                     },
                     {
@@ -241,7 +264,7 @@ export default {
                         xAxisIndex: [0, 1],
                         type: "slider",
                         top: "90%",
-                        start: 98,
+                        start: start,
                         end: 100
                     }
                 ],
@@ -249,7 +272,7 @@ export default {
                     {
                         name: "日K线",
                         type: "candlestick",
-                        data: data.values,
+                        data: data && data.values,
                         itemStyle: {
                             color: this.upColor,
                             color0: this.downColor,
@@ -260,7 +283,7 @@ export default {
                     {
                         name: "短期趋势",
                         type: "line",
-                        data: data.trends[0],
+                        data: data && data.trends && data.trends[0],
                         smooth: false,
                         lineStyle: {
                             opacity: 1
@@ -269,7 +292,7 @@ export default {
                     {
                         name: "中期趋势",
                         type: "line",
-                        data: data.trends[1],
+                        data: data && data.trends && data.trends[1],
                         smooth: false,
                         lineStyle: {
                             opacity: 1
@@ -278,7 +301,7 @@ export default {
                     {
                         name: "长期趋势",
                         type: "line",
-                        data: data.trends[2],
+                        data: data && data.trends && data.trends[2],
                         smooth: false,
                         lineStyle: {
                             opacity: 1
@@ -287,7 +310,7 @@ export default {
                     {
                         name: "区间量",
                         type: "line",
-                        data: data.changes,
+                        data: data && data.changes,
                         symbol: "none",
                         xAxisIndex: 1,
                         yAxisIndex: 1,
@@ -297,24 +320,84 @@ export default {
                     }
                 ]
             };
+        },
+        dataReady(event, rawData) {
+            log.info("响应数据返回");
+            console.log("响应数据返回");
+            this.loading = false;
+            let graphElement = document.getElementById("graph");
 
+            if (this.dailyChart === null) {
+                // this.dailyChart.clear();
+                // this.dailyChart.dispose();
+                this.dailyChart = this.echarts.init(graphElement);
+                window.addEventListener("resize", () => {
+                    this.dailyChart.resize();
+                });
+            }
+
+            let info = this.$store.getters.queryInfoByCode(rawData.tsCode);
+            rawData.info = info;
+            this.dailyData = rawData;
+            log.info(
+                `日线数据长度：${this.dailyData &&
+                    this.dailyData.data &&
+                    this.dailyData.data.length}, ${rawData.tsCode}, ${info}`
+            );
+            console.log(
+                `日线数据长度：${this.dailyData &&
+                    this.dailyData.data &&
+                    this.dailyData.data.length}, ${rawData.tsCode}, %o`,
+                info
+            );
+
+            let data = this.splitData(this.dailyData);
+            let option = this.getGraphOption(data);
             this.dailyChart.setOption(option, true);
+            this.dailyChart.resize();
+        },
+        initRefreshGraph() {
+            if (this.$store.state.initDataFinished) {
+                ipcRenderer.send("data-stock-read", {
+                    name: "stockTrend",
+                    tsCode: this.graphTsCode // this.$route.params.tsCode
+                });
+            } else {
+                setTimeout(this.initRefreshGraph, 0);
+            }
+        },
+        queryStockCode(queryString, cb) {
+            setTimeout(() => {
+                log.info(`查询：${queryString}`);
+                console.log(`查询：${queryString}`);
+                let infos = this.$store.getters.queryCodes(queryString);
+                log.info(`结果：${infos && infos.length}`);
+                console.log(`结果：${infos && infos.length}`);
+                cb(infos);
+            }, 0);
+        },
+        handleSelect() {
+            this.refreshGraph();
         }
     },
     created() {
         // 设置返回数据响应
         ipcRenderer.on("data-stockTrend-ready", this.dataReady);
+
+        this.debouncedRefreshGraph = _.debounce(this.refreshGraph, 500);
     },
     mounted() {
         // 初始化数据读取
         // 发出数据读取请求
-        ipcRenderer.send("data-stock-read", {
-            name: "stockTrend",
-            tsCode: this.tsCode // this.$route.params.tsCode
-        });
+        log.info("TrendGraph 初始化！");
+        this.initRefreshGraph();
     },
     unmounted() {},
     destroyed() {
+        if (this.dailyChart !== null) {
+            this.dailyChart.clear();
+            this.dailyChart.dispose();
+        }
         console.log("remove all listeners in stock daily!");
         ipcRenderer.removeAllListeners("data-stockTrend-ready");
     }

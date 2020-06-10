@@ -9,16 +9,11 @@ import {
 import {
     readStockData,
     readStockList,
-    // readStockIndexList,
+    readStockIndexList,
     stockDataNames
 } from "@wt/lib-wtda-query";
 
-// const stockData = require("@wt/lib-wtda");
-//     readStockData,
-//     readStockList,
-//     // readStockIndexList,
-//     stockDataNames
-// } from "@wt/lib-wtda";
+import log from "electron-log";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -70,7 +65,11 @@ app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (win === null) {
-        createWindow();
+        try {
+            createWindow();
+        } catch (error) {
+            log.error(`创建窗口发生错误：${error}`);
+        }
     }
 });
 
@@ -86,7 +85,7 @@ app.on("ready", async () => {
             console.error("Vue Devtools failed to install:", e.toString());
         }
     }
-    prepareStockList();
+    // prepareStockList();
     createWindow();
 });
 
@@ -105,7 +104,8 @@ if (isDevelopment) {
     }
 }
 
-const _stockListMap = {};
+//const _stockListMap = {};
+//const _indexListMap = {};
 /**
  * 准备股票列表，可以为后续的相应操作提供基础的内存数据支持
  */
@@ -115,21 +115,46 @@ async function prepareStockList() {
         console.log(
             `读取股票列表数据：${stockListData && stockListData.data.length}`
         );
+        log.info(
+            `读取股票列表数据：${stockListData && stockListData.data.length}`
+        );
+
+        let indexListData = await readStockIndexList();
         if (
-            stockListData &&
-            stockListData.data &&
-            stockListData.data.length > 0
+            indexListData &&
+            indexListData.data &&
+            indexListData.data.length > 0
         ) {
-            while (stockListData.data.length > 0) {
-                let item = stockListData.data.pop();
-                _stockListMap[item.ts_code] = item;
-            }
+            indexListData.data = indexListData.data.filter(item => {
+                return item.market === "SSE" || item.market === "SZSE";
+            });
         }
-        stockListData = null;
+        log.info(
+            `读取指数列表数据：${indexListData &&
+                indexListData.data &&
+                indexListData.data.length}`
+        );
+        console.log(
+            `读取指数列表数据：${indexListData &&
+                indexListData.data &&
+                indexListData.data.length}`
+        );
+        return { stock: stockListData.data, index: indexListData.data };
     } catch (error) {
-        console.error(`读取股票列表时发生异常：%{error}`);
+        log.error(`读取股票/指数列表时发生异常：${error}`);
+        console.error(`读取股票/指数列表时发生异常：${error}`);
     }
 }
+
+ipcMain.on("init-stockList", async function(event) {
+    try {
+        let data = await prepareStockList();
+        event.sender.send("init-stockList-ready", data);
+    } catch (error) {
+        log.error(`读取股票列表时发生异常：${error}`);
+        console.log("获取股票列表时发生错误");
+    }
+});
 
 ipcMain.on("data-stock-read", async function(event, args) {
     console.log("收到数据读取事件，开始读取：", args);
@@ -159,12 +184,15 @@ ipcMain.on("data-stock-read", async function(event, args) {
             stockDailyData && stockDailyData.data
         );
     } else if (args.name === "stockTrend") {
+        log.info(`stockTrend 事件：, ${args}`);
         console.log("stockTrend 事件：%o", args);
         let stockTrendData = await readStockData(
             stockDataNames.trend,
             args.tsCode
         );
-        stockTrendData.info = _stockListMap[args.tsCode];
+        //TODO: 需要单独获取股票或者指数的名称信息
+        //stockTrendData.info = _stockListMap[args.tsCode];
+        stockTrendData.tsCode = args.tsCode;
         event.sender.send("data-stockTrend-ready", stockTrendData);
     }
 });

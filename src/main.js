@@ -1,11 +1,14 @@
 import Vue from "vue";
 import App from "./App.vue";
+import VueCompositionApi from "@vue/composition-api";
 import router from "./router";
 import store from "./store";
 import Echarts from "echarts";
 import "./plugins/element.js";
 import { ipcRenderer } from "electron";
 import log from "electron-log";
+
+Vue.use(VueCompositionApi);
 
 Vue.config.productionTip = false;
 Vue.prototype.echarts = Echarts;

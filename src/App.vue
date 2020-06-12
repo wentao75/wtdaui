@@ -5,7 +5,11 @@
 </template>
 
 <script>
+import { provideStore } from "@/composables/use-store.js";
 export default {
+    setup(props, { root: { $store } }) {
+        provideStore($store);
+    },
     name: "app",
     components: {}
 };

@@ -16,8 +16,8 @@ export default function(store, graphElementId, props) {
         var values = [];
         let changes = [];
 
-        let dailyData = stockData.data.reverse();
-        for (var i = 0; i < dailyData.length; i++) {
+        let dailyData = stockData.data; //.reverse();
+        for (var i = dailyData.length - 1; i >= 0; i--) {
             categoryData.push(dailyData[i].trade_date);
             values.push([
                 dailyData[i].open,
@@ -27,11 +27,12 @@ export default function(store, graphElementId, props) {
             ]);
 
             changes.push([
-                i,
-                (
-                    (dailyData[i].high - dailyData[i].low) /
-                    dailyData[i].open
-                ).toFixed(3)
+                dailyData[i].trade_date,
+                _.round(
+                    ((dailyData[i].high - dailyData[i].low) * 100) /
+                        dailyData[i].open,
+                    2
+                )
             ]);
             // volumes.push([
             //     i,
@@ -197,7 +198,7 @@ export default function(store, graphElementId, props) {
                     scale: true,
                     gridIndex: 1,
                     splitNumber: 2,
-                    axisLabel: { show: true },
+                    axisLabel: { show: true, formatter: "{value}%" },
                     axisLine: { show: false },
                     axisTick: { show: true },
                     splitLine: { show: true }
@@ -266,7 +267,10 @@ export default function(store, graphElementId, props) {
                     xAxisIndex: 1,
                     yAxisIndex: 1,
                     markLine: {
-                        data: [{ type: "average", name: "平均值" }]
+                        data: [{ type: "average", name: "平均值" }],
+                        label: {
+                            formatter: "{c}%"
+                        }
                     }
                 }
             ]
@@ -278,7 +282,7 @@ export default function(store, graphElementId, props) {
     };
 
     const dataReady = rawData => {
-        console.log("处理数据 ...");
+        console.log("trend 处理数据 ...");
         let graphElement = document.getElementById(graphElementId);
 
         if (dailyChart === null) {
@@ -304,9 +308,15 @@ export default function(store, graphElementId, props) {
 
         dailyChart.setOption(option, true);
         dailyChart.resize();
+        console.log("trend 数据设置完毕！");
     };
 
     onMounted(() => {
+        console.log("trend onMounted");
+        dataReady(props.data);
+        // if (dailyChart) {
+        //     dailyChart.resize();
+        // }
         // watchEffect(() => {
         // watch(props, () => {
         //     dataReady(); //props.dailyData);
@@ -314,6 +324,7 @@ export default function(store, graphElementId, props) {
     });
 
     onUnmounted(() => {
+        console.log("trend onUnmounted");
         if (dailyChart !== null) {
             dailyChart.clear();
             dailyChart.dispose();
@@ -323,9 +334,5 @@ export default function(store, graphElementId, props) {
 
     return {
         dataReady
-        // tsCode,
-        // dailyData
-        // dailyChart
-        // graphStyle
     };
 }

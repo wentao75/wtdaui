@@ -1,5 +1,5 @@
 <template>
-    <div id="graph" style="width:100%;height:100%">{{ props.dailyData }}</div>
+    <div id="graph" style="width:100%;height:100%"></div>
 </template>
 
 <script>
@@ -25,7 +25,16 @@ export default {
 
     setup(props) {
         const store = useStore();
-        useTrendGraph(store, "graph", props);
+        const { dataReady } = useTrendGraph(store, "graph", props);
+        return {
+            dataReady
+        };
+    },
+
+    watch: {
+        data: function(dailyData) {
+            this.dataReady(dailyData);
+        }
     }
     // data() {
     //     return {

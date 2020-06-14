@@ -1,21 +1,34 @@
 <template>
     <el-container>
-        <el-header
-            ><el-autocomplete
+        <el-header>
+            <el-autocomplete
                 placeholder="请输入股票代码"
                 v-model="tsCode"
                 :fetch-suggestions="queryStockCode"
                 @select="handleSelect"
                 clearable
-            ></el-autocomplete
-        ></el-header>
+            ></el-autocomplete>
+            <el-radio-group v-model="activeGraph">
+                <el-radio-button label="trend" value="trend"
+                    >趋势图</el-radio-button
+                >
+                <el-radio-button label="volatile" value="volatile"
+                    >开盘分布</el-radio-button
+                >
+            </el-radio-group>
+        </el-header>
         <el-main v-loading="loading || !$store.state.initDataFinished">
-            <TrendGraph :tsCode="selectedTsCode" :data="dailyData" />
-            <!-- <div id="graph" :style="graphStyle"></div> -->
-
-            <!-- <RelationsOfVolatile :tsCode="graphTsCode" /> -->
+            <TrendGraph
+                v-if="activeGraph === 'trend'"
+                :tsCode="selectedTsCode"
+                :data="dailyData"
+            />
+            <RelationsOfVolatile
+                v-if="activeGraph === 'volatile'"
+                :tsCode="selectedTsCode"
+                :data="dailyData"
+            />
         </el-main>
-        <!-- <div id="home"></div> -->
     </el-container>
 </template>
 
@@ -25,10 +38,15 @@ import { useSearchStock } from "../composables/use-search-stock.js";
 
 // @ is an alias to /src
 import TrendGraph from "@/components/TrendGraph.vue";
-// import RelationsOfVolatile from "@/comonents/RelationsOfVolatile.vue";
+import RelationsOfVolatile from "@/components/RelationsOfVolatile.vue";
 
 export default {
     name: "StockHome",
+    data() {
+        return {
+            activeGraph: "trend"
+        };
+    },
     setup() {
         const store = useStore();
         const {
@@ -51,14 +69,17 @@ export default {
     },
 
     components: {
-        TrendGraph
-        // RelationsOfVolatile
+        TrendGraph,
+        RelationsOfVolatile
     }
 };
 </script>
 
 <style>
-#home {
+.el-autocomplete {
+    margin: 10px;
+}
+.el-tab-pane .el-tabs {
     padding: 0px;
     margin: 0px;
     width: 100%;

@@ -18,13 +18,13 @@ export default new Vuex.Store({
         },
         queryInfoByCode: state => code => {
             if (_.isEmpty(code)) return null;
-            console.log(
-                `${code}, %o, %o, %o, %o`,
-                state.stockList,
-                state.indexList,
-                state.stockList && state.stockList.get(code),
-                state.indexList && state.indexList.get(code)
-            );
+            // console.log(
+            //     `${code}, %o, %o, %o, %o`,
+            //     state.stockList,
+            //     state.indexList,
+            //     state.stockList && state.stockList.get(code),
+            //     state.indexList && state.indexList.get(code)
+            // );
             return (
                 (state.stockList && state.stockList.get(code)) ||
                 (state.indexList && state.indexList.get(code))

@@ -9,22 +9,20 @@
                 clearable
             ></el-autocomplete>
             <el-radio-group v-model="activeGraph">
-                <el-radio-button label="trend" value="trend"
-                    >趋势图</el-radio-button
-                >
-                <el-radio-button label="volatile" value="volatile"
-                    >开盘分布</el-radio-button
-                >
+                <el-radio-button label="trend" value="trend">趋势图</el-radio-button>
+                <el-radio-button label="volatile" value="volatile">开盘分布</el-radio-button>
+                <el-radio-button label="volatile2" value="volatile2">波幅分布</el-radio-button>
             </el-radio-group>
         </el-header>
         <el-main v-loading="loading || !$store.state.initDataFinished">
-            <TrendGraph
-                v-if="activeGraph === 'trend'"
+            <TrendGraph v-if="activeGraph === 'trend'" :tsCode="selectedTsCode" :data="dailyData" />
+            <RelationsOfVolatile
+                v-if="activeGraph === 'volatile'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
             />
-            <RelationsOfVolatile
-                v-if="activeGraph === 'volatile'"
+            <VolatileGraph
+                v-if="activeGraph === 'volatile2'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
             />
@@ -39,6 +37,7 @@ import { useSearchStock } from "../composables/use-search-stock.js";
 // @ is an alias to /src
 import TrendGraph from "@/components/TrendGraph.vue";
 import RelationsOfVolatile from "@/components/RelationsOfVolatile.vue";
+import VolatileGraph from "../components/VolatileGraph.vue";
 
 export default {
     name: "StockHome",
@@ -70,7 +69,8 @@ export default {
 
     components: {
         TrendGraph,
-        RelationsOfVolatile
+        RelationsOfVolatile,
+        VolatileGraph
     }
 };
 </script>

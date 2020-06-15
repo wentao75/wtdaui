@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from "@vue/composition-api";
+import { onMounted, onUnmounted, watch } from "@vue/composition-api";
 import echarts from "echarts";
 import _ from "lodash";
 
@@ -152,16 +152,7 @@ export default function(store, graphElementId, props) {
 
     onMounted(() => {
         console.log("volatile onMounted");
-        // if (dailyChart) {
-        //     dailyChart.resize();
-        // } else {
-        //     console.log("没有数据，重置！");
         dataReady(props.data);
-        // }
-        // watchEffect(() => {
-        // watch(props, () => {
-        //     dataReady(); //props.dailyData);
-        // });
     });
 
     onUnmounted(() => {
@@ -172,6 +163,14 @@ export default function(store, graphElementId, props) {
         }
         window.removeEventListener("resize", dailyChartResize);
     });
+
+    watch(
+        () => props.data,
+        data => {
+            console.log("数据变化，开始VolatileGraph处理...");
+            dataReady(data);
+        }
+    );
 
     return {
         dataReady

@@ -12,11 +12,6 @@ export default {
     props: {
         tsCode: String,
         data: Object
-        // params: {
-        //     type: Object,
-        //     required: false,
-        //     default: () => ({ downColor: "#00da3c", upColor: "#ec0000" })
-        // }
     },
     setup(props) {
         const store = useStore();
@@ -24,17 +19,7 @@ export default {
         return {
             dataReady
         };
-    },
-
-    watch: {
-        data: function(data) {
-            this.dataReady(data);
-        }
     }
-
-    // mounted() {
-    //     this.dataReady(this.data);
-    // }
 };
 </script>
 

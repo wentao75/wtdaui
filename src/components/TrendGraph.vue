@@ -3,6 +3,7 @@
 </template>
 
 <script>
+// import { watch } from "@vue/composition-api";
 import useTrendGraph from "../composables/use-trend-graph.js";
 import { useStore } from "../composables/use-store.js";
 
@@ -24,18 +25,15 @@ export default {
     },
 
     setup(props) {
+        // const dataRef = toRef(props, "data");
         const store = useStore();
         const { dataReady } = useTrendGraph(store, "graph", props);
+
         return {
             dataReady
         };
-    },
-
-    watch: {
-        data: function(dailyData) {
-            this.dataReady(dailyData);
-        }
     }
+
     // data() {
     //     return {
     //         loading: false,

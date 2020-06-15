@@ -19,12 +19,6 @@ export default {
         return {
             dataReady
         };
-    },
-
-    watch: {
-        data: function(data) {
-            this.dataReady(data);
-        }
     }
 };
 </script>

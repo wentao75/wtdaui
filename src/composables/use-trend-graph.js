@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from "@vue/composition-api";
+import { onMounted, onUnmounted, watch } from "@vue/composition-api";
 import echarts from "echarts";
 import _ from "lodash";
 
@@ -129,21 +129,21 @@ export default function(store, graphElementId, props) {
                     backgroundColor: "#777"
                 }
             },
-            visualMap: {
-                show: false,
-                seriesIndex: 4,
-                dimension: 2,
-                pieces: [
-                    {
-                        value: 1,
-                        color: props.params.downColor
-                    },
-                    {
-                        value: -1,
-                        color: props.params.upColor
-                    }
-                ]
-            },
+            // visualMap: {
+            //     show: false,
+            //     seriesIndex: 4,
+            //     dimension: 2,
+            //     pieces: [
+            //         {
+            //             value: 1,
+            //             color: props.params.downColor
+            //         },
+            //         {
+            //             value: -1,
+            //             color: props.params.upColor
+            //         }
+            //     ]
+            // },
             grid: [
                 {
                     left: "5%",
@@ -331,6 +331,14 @@ export default function(store, graphElementId, props) {
         }
         window.removeEventListener("resize", dailyChartResize);
     });
+
+    watch(
+        () => props.data,
+        data => {
+            console.log("数据变化，开始trendGraph处理...");
+            dataReady(data);
+        }
+    );
 
     return {
         dataReady

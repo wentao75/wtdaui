@@ -1,14 +1,24 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "../views/Home.vue";
+import Indicator from "../views/Indicator.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
     {
         path: "/",
+        redirect: "/indicator"
+    },
+    {
+        path: "/home",
         name: "Home",
         component: Home
+    },
+    {
+        path: "/indicator",
+        name: "Indicator",
+        component: Indicator
     }
     // {
     //     path: "/trend",

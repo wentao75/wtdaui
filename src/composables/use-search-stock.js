@@ -2,7 +2,11 @@ import { ref, onMounted, onUnmounted } from "@vue/composition-api";
 import { ipcRenderer } from "electron";
 import _ from "lodash";
 
-export function useSearchStock(store, defaultCode = "000001.SZ") {
+export function useSearchStock(
+    store,
+    dataType = "stockTrend",
+    defaultCode = "000001.SZ"
+) {
     const tsCode = ref(defaultCode);
     const selectedTsCode = ref(defaultCode);
     const loading = ref(false);
@@ -31,7 +35,7 @@ export function useSearchStock(store, defaultCode = "000001.SZ") {
             loading.value = true;
             selectedTsCode.value = tsCode.value;
             ipcRenderer.send("data-stock-read", {
-                name: "stockTrend",
+                name: dataType,
                 tsCode: selectedTsCode.value
             });
         }
@@ -44,7 +48,7 @@ export function useSearchStock(store, defaultCode = "000001.SZ") {
     const initRefreshGraph = () => {
         if (store.state.initDataFinished) {
             ipcRenderer.send("data-stock-read", {
-                name: "stockTrend",
+                name: dataType,
                 tsCode: selectedTsCode.value
             });
         } else {
@@ -97,9 +101,13 @@ export function useSearchStock(store, defaultCode = "000001.SZ") {
 
     onMounted(() => {
         // 设置返回数据响应
-        ipcRenderer.on("data-stockTrend-ready", dataReady);
+        if (dataType === "stockTrend") {
+            ipcRenderer.on("data-stockTrend-ready", dataReady);
+        } else {
+            ipcRenderer.on("data-stockDaily-ready", dataReady);
+        }
         // 初始化数据读取
-        console.log("TrendGraph 初始化！");
+        console.log(`${dataType} 初始化！`);
         initRefreshGraph();
     });
 
@@ -110,7 +118,11 @@ export function useSearchStock(store, defaultCode = "000001.SZ") {
         //     this.dailyChart.dispose();
         // }
         console.log("remove all listeners in stock daily!");
-        ipcRenderer.removeAllListeners("data-stockTrend-ready");
+        if (dataType === "stockTrend") {
+            ipcRenderer.removeAllListeners("data-stockTrend-ready");
+        } else {
+            ipcRenderer.removeAllListeners("data-stockDaily-ready");
+        }
     });
 
     return {

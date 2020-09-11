@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted, watch } from "@vue/composition-api";
 import echarts from "echarts";
 import _ from "lodash";
+import { indicators } from "@wt/lib-stock";
 
 export default function(store, graphElementId, props) {
     // const tsCode = ref("");
@@ -14,9 +15,17 @@ export default function(store, graphElementId, props) {
     const splitData = stockData => {
         var categoryData = [];
         var values = [];
-        let changes = [];
+        // let changes = [];
 
         let dailyData = stockData.data; //.reverse();
+        // let kcData = KC.keltner(dailyData, { n: 20, m: 1.5 });
+        let kcData = indicators.KC.keltner(dailyData, {
+            n: 20,
+            m: 1.5,
+            type1: "ema",
+            type2: "ma"
+        });
+
         for (var i = dailyData.length - 1; i >= 0; i--) {
             categoryData.push(dailyData[i].trade_date);
             values.push([
@@ -26,14 +35,14 @@ export default function(store, graphElementId, props) {
                 dailyData[i].low
             ]);
 
-            changes.push([
-                dailyData[i].trade_date,
-                _.round(
-                    ((dailyData[i].high - dailyData[i].low) * 100) /
-                        dailyData[i].open,
-                    2
-                )
-            ]);
+            // changes.push([
+            //     dailyData[i].trade_date,
+            //     _.round(
+            //         ((dailyData[i].high - dailyData[i].low) * 100) /
+            //             dailyData[i].open,
+            //         2
+            //     )
+            // ]);
             // volumes.push([
             //     i,
             //     dailyData[i].vol,
@@ -44,9 +53,7 @@ export default function(store, graphElementId, props) {
         return {
             categoryData: categoryData,
             values: values,
-            // volumes: volumes,
-            changes: changes,
-            trends: stockData.trends,
+            kc: kcData,
             info: stockData.info
         };
     };
@@ -72,8 +79,8 @@ export default function(store, graphElementId, props) {
             animation: false,
             legend: {
                 // bottom: 10,
-                right: "5%",
-                data: ["日K线", "短期趋势", "中期趋势", "长期趋势"]
+                right: "5%"
+                // data: ["日K线", "短期趋势", "中期趋势", "长期趋势"]
             },
             tooltip: {
                 trigger: "axis",
@@ -129,21 +136,6 @@ export default function(store, graphElementId, props) {
                     backgroundColor: "#777"
                 }
             },
-            // visualMap: {
-            //     show: false,
-            //     seriesIndex: 4,
-            //     dimension: 2,
-            //     pieces: [
-            //         {
-            //             value: 1,
-            //             color: props.params.downColor
-            //         },
-            //         {
-            //             value: -1,
-            //             color: props.params.upColor
-            //         }
-            //     ]
-            // },
             grid: [
                 {
                     left: "5%",
@@ -233,46 +225,46 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
-                    name: "短期趋势",
+                    name: "均值",
                     type: "line",
-                    data: data && data.trends && data.trends[0],
+                    data: data && data.kc && data.kc[0],
                     smooth: false,
                     lineStyle: {
                         opacity: 1
-                    }
-                },
-                {
-                    name: "中期趋势",
-                    type: "line",
-                    data: data && data.trends && data.trends[1],
-                    smooth: false,
-                    lineStyle: {
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "长期趋势",
-                    type: "line",
-                    data: data && data.trends && data.trends[2],
-                    smooth: false,
-                    lineStyle: {
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "区间量",
-                    type: "line",
-                    data: data && data.changes,
-                    symbol: "none",
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
-                    markLine: {
-                        data: [{ type: "average", name: "平均值" }],
-                        label: {
-                            formatter: "{c}%"
-                        }
                     }
                 }
+                // {
+                //     name: "中期趋势",
+                //     type: "line",
+                //     data: data && data.trends && data.trends[1],
+                //     smooth: false,
+                //     lineStyle: {
+                //         opacity: 1
+                //     }
+                // },
+                // {
+                //     name: "长期趋势",
+                //     type: "line",
+                //     data: data && data.trends && data.trends[2],
+                //     smooth: false,
+                //     lineStyle: {
+                //         opacity: 1
+                //     }
+                // },
+                // {
+                //     name: "区间量",
+                //     type: "line",
+                //     data: data && data.changes,
+                //     symbol: "none",
+                //     xAxisIndex: 1,
+                //     yAxisIndex: 1,
+                //     markLine: {
+                //         data: [{ type: "average", name: "平均值" }],
+                //         label: {
+                //             formatter: "{c}%"
+                //         }
+                //     }
+                // }
             ]
         };
     };
@@ -299,9 +291,8 @@ export default function(store, graphElementId, props) {
         console.log(
             `日线数据长度：${dailyData &&
                 dailyData.data &&
-                dailyData.data.length}, ${rawData && rawData.tsCode}, %o， %o`,
-            rawData && rawData.info,
-            dailyData.data[0]
+                dailyData.data.length}, ${rawData && rawData.tsCode}, %o`,
+            rawData && rawData.info
         );
 
         let data = splitData(dailyData);

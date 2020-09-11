@@ -179,17 +179,16 @@ ipcMain.on("data-stock-read", async function(event, args) {
             stockDataNames.daily,
             args.tsCode
         );
-        event.sender.send(
-            "data-stockDaily-ready",
-            stockDailyData && stockDailyData.data
-        );
+        stockDailyData.tsCode = args.tsCode;
+        event.sender.send("data-stockDaily-ready", stockDailyData);
     } else if (args.name === "stockTrend") {
-        log.info(`stockTrend 事件：, ${args}`);
+        log.info(`stockTrend 事件：, %o`, args);
         console.log("stockTrend 事件：%o", args);
         let stockTrendData = await readStockData(
             stockDataNames.trend,
             args.tsCode
         );
+        log.info(`trend: %o`, stockTrendData.data[0]);
         //TODO: 需要单独获取股票或者指数的名称信息
         //stockTrendData.info = _stockListMap[args.tsCode];
         stockTrendData.tsCode = args.tsCode;

@@ -21,22 +21,26 @@ export default function(store, graphElementId, props) {
         utils.checkTradeData(dailyData);
 
         // let kcData = KC.keltner(dailyData, { n: 20, m: 1.5 });
+        let source = "close";
         console.log(`params: %o`, props.params);
         let kcData = indicators.KC.calculate(dailyData, {
             n: (props && props.params.n) || 20,
             m: (props && props.params.m) || 1.5,
             type1: "ema",
-            type2: "ma"
+            type2: "ma",
+            source
         });
         let bollData = indicators.BOLL.calculate(dailyData, {
             n: (props && props.params.n) || 20,
             m: (props && props.params.bm) || 2,
-            ma: "ema"
+            ma: "ema",
+            source
         });
 
         let mtmData = indicators.MTM.calculate(dailyData, {
             n: 12,
-            source: "close"
+            source
+            // source: "close"
         });
 
         for (var i = 0; i < dailyData.length - 1; i++) {

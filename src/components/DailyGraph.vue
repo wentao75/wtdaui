@@ -14,7 +14,13 @@ export default {
         params: {
             type: Object,
             required: false,
-            default: () => ({ downColor: "#00da3c", upColor: "#ec0000" })
+            default: () => ({
+                downColor: "#00da3c",
+                upColor: "#ec0000",
+                n: 20,
+                m: 1.5,
+                bm: 2
+            })
         }
     },
 

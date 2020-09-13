@@ -16,6 +16,7 @@ export default function(store, graphElementId, props) {
         var categoryData = [];
         var values = [];
         // let changes = [];
+        let squeezeFlags = [];
 
         let dailyData = stockData.data; //.reverse();
         utils.checkTradeData(dailyData);
@@ -23,27 +24,51 @@ export default function(store, graphElementId, props) {
         // let kcData = KC.keltner(dailyData, { n: 20, m: 1.5 });
         let source = "close";
         console.log(`params: %o`, props.params);
-        let kcData = indicators.KC.calculate(dailyData, {
+        let digits = 3;
+        let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
+            source,
+            ma: "ema",
             n: (props && props.params.n) || 20,
-            m: (props && props.params.m) || 1.5,
+            bm: (props && props.params.bm) || 2,
+            km: (props && props.params.m) || 1.5,
+            mt: "AO", // "MTM"
+            mn: 5,
+            mm: 12,
+            digits
+        });
+
+        let kcData = indicators.KC.calculate(dailyData, {
+            n: 14,
+            m: 1.5,
             type1: "ema",
             type2: "ma",
-            source
+            source,
+            digits
         });
-        let bollData = indicators.BOLL.calculate(dailyData, {
-            n: (props && props.params.n) || 20,
-            m: (props && props.params.bm) || 2,
-            ma: "ema",
-            source
-        });
+        // let bollData = indicators.BOLL.calculate(dailyData, {
+        //     n: (props && props.params.n) || 20,
+        //     m: (props && props.params.bm) || 2,
+        //     ma: "ema",
+        //     source,
+        //     digits
+        // });
 
-        let mtmData = indicators.MTM.calculate(dailyData, {
-            n: 12,
-            source
-            // source: "close"
-        });
+        // // let mtmData = indicators.MTM.calculate(dailyData, {
+        // //     n: 12,
+        // //     m: 20,
+        // //     source
+        // // digits
+        // //     // source: "close"
+        // // });
+        // let mtmData = indicators.AO.calculate(dailyData, {
+        //     n: 5,
+        //     m: 12,
+        //     source,
+        //     digits
+        //     // source: "close"
+        // });
 
-        for (var i = 0; i < dailyData.length - 1; i++) {
+        for (let i = 0; i < dailyData.length; i++) {
             categoryData.push(dailyData[i].trade_date);
             values.push([
                 dailyData[i].open,
@@ -51,6 +76,14 @@ export default function(store, graphElementId, props) {
                 dailyData[i].high,
                 dailyData[i].low
             ]);
+
+            if (squeezeData[6][i] === indicators.SQUEEZE.states.READY) {
+                squeezeFlags[i] = 0;
+            } else {
+                //squeezeFlags[i] = "--";
+            }
+
+            squeezeData[5][i] = [i, squeezeData[5][i], squeezeData[6][i]];
 
             // changes.push([
             //     dailyData[i].trade_date,
@@ -71,8 +104,10 @@ export default function(store, graphElementId, props) {
             categoryData: categoryData,
             values: values,
             kc: kcData,
-            boll: bollData,
-            mtm: mtmData,
+            // boll: bollData,
+            // mtm: mtmData,
+            squeeze: squeezeData,
+            flags: squeezeFlags,
             info: stockData.info
         };
     };
@@ -88,21 +123,39 @@ export default function(store, graphElementId, props) {
         }
         return {
             backgroundColor: "#000",
+            textStyle: {
+                color: "#fff"
+            },
             // backgroundColor: "#fff",
             title: {
                 text:
                     data &&
                     data.info &&
                     data.info.ts_code + " " + data.info.name, //"K线图",
+                textStyle: {
+                    color: "#fff"
+                },
                 top: 10,
                 left: "5%"
             },
             animation: false,
             legend: {
+                textStyle: {
+                    color: "#fff"
+                },
                 top: 10,
                 // bottom: 10,
-                right: "5%"
-                // data: ["日K线", "短期趋势", "中期趋势", "长期趋势"]
+                right: "5%",
+                data: [
+                    "ATR-均值",
+                    "ATR-上",
+                    "ATR-下",
+                    "挤牌-均值",
+                    "挤牌-B上",
+                    "挤牌-B下",
+                    "挤牌-K上",
+                    "挤牌-K下"
+                ]
             },
             tooltip: {
                 trigger: "axis",
@@ -145,16 +198,37 @@ export default function(store, graphElementId, props) {
 
                     return [
                         paramK.name + '<hr size=1 style="margin: 3px 0">',
-                        "均值: " + paramKC[0].data + "<br/>",
-                        "开盘: " + paramK.data[1] + "<br/>",
-                        "收盘: " + paramK.data[2] + "<br/>",
-                        "最高: " + paramK.data[3] + "<br/>",
-                        "最低: " + paramK.data[4] + "<br/>",
-                        "KC上沿: " + paramKC[1].data + "<br/>",
-                        "KC下沿: " + paramKC[2].data + "<br/>",
-                        "BOLL上沿: " + paramBOLL[0].data + "<br/>",
-                        "BOLL下沿: " + paramBOLL[1].data + "<br/>",
-                        "MTM: " + paramMTM.data
+                        "均值: " +
+                            (paramKC && paramKC[0] && paramKC[0].data) +
+                            "<br/>",
+                        "开盘: " +
+                            (paramK && paramK.data && paramK.data[1]) +
+                            "<br/>",
+                        "收盘: " +
+                            (paramK && paramK.data && paramK.data[2]) +
+                            "<br/>",
+                        "最高: " +
+                            (paramK && paramK.data && paramK.data[3]) +
+                            "<br/>",
+                        "最低: " +
+                            (paramK && paramK.data && paramK.data[4]) +
+                            "<br/>",
+                        "KC上沿: " +
+                            (paramKC && paramKC[1] && paramKC[1].data) +
+                            "<br/>",
+                        "KC下沿: " +
+                            (paramKC && paramKC[2] && paramKC[2].data) +
+                            "<br/>",
+                        "BOLL上沿: " +
+                            (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
+                            "<br/>",
+                        "BOLL下沿: " +
+                            (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
+                            "<br/>",
+                        "MTM: " +
+                            (paramMTM && paramMTM.data && paramMTM.data[1]) +
+                            ", " +
+                            (paramMTM && paramMTM.data && paramMTM.data[2])
                     ].join("");
                 }
                 // extraCssText: 'width: 170px'
@@ -169,13 +243,19 @@ export default function(store, graphElementId, props) {
                 {
                     left: "5%",
                     right: "5%",
-                    height: "60%"
+                    height: "42%" //"60%"
                 },
                 {
                     left: "5%",
                     right: "5%",
-                    top: "73%",
-                    height: "21%"
+                    top: "51%", //"73%",
+                    height: "24%"
+                },
+                {
+                    left: "5%",
+                    right: "5%",
+                    top: "79%",
+                    height: "15%"
                 }
             ],
             xAxis: [
@@ -202,6 +282,19 @@ export default function(store, graphElementId, props) {
                     axisLine: { onZero: false },
                     axisTick: { show: false },
                     splitLine: { show: false },
+                    splitNumber: 20,
+                    min: "dataMin",
+                    max: "dataMax"
+                },
+                {
+                    type: "category",
+                    gridIndex: 2,
+                    data: data.categoryData,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { onZero: false },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
                     axisLabel: { show: false },
                     splitNumber: 20,
                     min: "dataMin",
@@ -210,7 +303,14 @@ export default function(store, graphElementId, props) {
             ],
             yAxis: [
                 {
-                    scale: true
+                    scale: true,
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color: "#777",
+                            type: "dashed"
+                        }
+                    }
                     // splitArea: {
                     //     show: true
                     // }
@@ -218,23 +318,40 @@ export default function(store, graphElementId, props) {
                 {
                     scale: true,
                     gridIndex: 1,
-                    splitNumber: 2,
-                    axisLabel: { show: true }, //formatter: "{value}%" },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color: "#777",
+                            type: "dashed"
+                        }
+                    }
+                },
+                {
+                    scale: true,
+                    gridIndex: 2,
+                    splitNumber: 3,
+                    axisLabel: { show: true },
                     axisLine: { show: false },
                     axisTick: { show: true },
-                    splitLine: { show: true }
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color: "#777",
+                            type: "dashed"
+                        }
+                    }
                 }
             ],
             dataZoom: [
                 {
                     type: "inside",
-                    xAxisIndex: [0, 1],
+                    xAxisIndex: [0, 1, 2],
                     start: start,
                     end: 100
                 },
                 {
                     show: true,
-                    xAxisIndex: [0, 1],
+                    xAxisIndex: [0, 1, 2],
                     type: "slider",
                     top: "96%",
                     start: start,
@@ -243,7 +360,7 @@ export default function(store, graphElementId, props) {
             ],
             series: [
                 {
-                    name: "日K线",
+                    name: "K线",
                     type: "candlestick",
                     data: data && data.values,
                     itemStyle: {
@@ -254,7 +371,100 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
-                    name: "均值",
+                    name: "挤牌-均值",
+                    type: "line",
+                    data: data && data.squeeze && data.squeeze[0],
+                    symbol: "none",
+                    smooth: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: {
+                        color: "#ff0",
+                        opacity: 0.5,
+                        width: 1
+                    }
+                },
+                {
+                    name: "挤牌-K上",
+                    type: "line",
+                    data: data && data.squeeze && data.squeeze[3],
+                    showSymbol: false,
+                    smooth: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: {
+                        color: "#0ff",
+                        width: 2,
+                        opacity: 0.5
+                    }
+                },
+                {
+                    name: "挤牌-K下",
+                    type: "line",
+                    data: data && data.squeeze && data.squeeze[4],
+                    showSymbol: false,
+                    smooth: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: {
+                        color: "#0ff",
+                        width: 2,
+                        opacity: 0.5
+                    }
+                },
+                {
+                    name: "挤牌-B上",
+                    type: "line",
+                    data: data && data.squeeze && data.squeeze[1],
+                    showSymbol: false,
+                    smooth: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: {
+                        color: "#bbb",
+                        width: 1,
+                        opacity: 0.5
+                    }
+                },
+                {
+                    name: "挤牌-B下",
+                    type: "line",
+                    data: data && data.squeeze && data.squeeze[2],
+                    showSymbol: false,
+                    smooth: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    lineStyle: {
+                        color: "#bbb",
+                        width: 1,
+                        opacity: 0.5
+                    }
+                },
+                {
+                    name: "挤牌-能量",
+                    type: "bar", //"line",
+                    data: data && data.squeeze && data.squeeze[5],
+                    symbol: "none",
+                    symbolSize: 3,
+                    // smooth: true,
+                    xAxisIndex: 2,
+                    yAxisIndex: 2
+                },
+                {
+                    name: "挤牌-标记",
+                    type: "scatter", //"line",
+                    data: data && data.flags,
+                    symbol: "circle",
+                    itemStyle: {
+                        color: "#FF0",
+                        borderType: "solid",
+                        opacity: 1
+                    },
+                    xAxisIndex: 2,
+                    yAxisIndex: 2
+                },
+                {
+                    name: "ATR-均值",
                     type: "line",
                     data: data && data.kc && data.kc[0],
                     symbol: "none",
@@ -266,67 +476,61 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
-                    name: "KC上沿",
+                    name: "ATR-上",
                     type: "line",
                     data: data && data.kc && data.kc[1],
                     showSymbol: false,
                     smooth: false,
                     lineStyle: {
                         color: "#0ff",
-                        width: 1,
+                        width: 2,
                         opacity: 1
                     }
                 },
                 {
-                    name: "KC下沿",
+                    name: "ATR-下",
                     type: "line",
                     data: data && data.kc && data.kc[2],
                     showSymbol: false,
                     smooth: false,
                     lineStyle: {
                         color: "#0ff",
-                        width: 1,
+                        width: 2,
                         opacity: 1
                     }
                 },
                 {
-                    name: "BOLL上沿",
-                    type: "line",
-                    data: data && data.boll && data.boll[1],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#f0f",
-                        width: 1,
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "BOLL下沿",
-                    type: "line",
-                    data: data && data.boll && data.boll[2],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#f0f",
-                        width: 1,
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "MTM",
-                    type: "bar", //"line",
-                    data: data && data.mtm,
-                    symbol: "none",
-                    // smooth: true,
+                    name: "K线",
+                    type: "candlestick",
+                    data: data && data.values,
+                    itemStyle: {
+                        color: props.params.upColor,
+                        color0: props.params.downColor,
+                        borderColor: null,
+                        borderColor0: null
+                    },
                     xAxisIndex: 1,
                     yAxisIndex: 1
-                    // markLine: {
-                    //     data: [{ type: "average", name: "平均值" }],
-                    //     label: {
-                    //         formatter: "{c}%"
-                    //     }
-                    // }
+                }
+            ],
+            visualMap: [
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            value: indicators.SQUEEZE.states.REST,
+                            color: "#777"
+                        },
+                        {
+                            value: indicators.SQUEEZE.states.READY,
+                            color: "#777"
+                        },
+                        { value: indicators.SQUEEZE.states.BUY, color: "#F00" },
+                        { value: indicators.SQUEEZE.states.SELL, color: "#0F0" }
+                    ],
+                    show: false,
+                    seriesIndex: 6,
+                    dimensions: 6
                 }
             ]
         };
@@ -362,6 +566,10 @@ export default function(store, graphElementId, props) {
         let option = getGraphOption(data);
 
         dailyChart.setOption(option, true);
+        // dailyChart.dispatchAction({
+        //     type: "legendUnSelect",
+        //     name: "均值"
+        // });
         dailyChart.resize();
         console.log("trend 数据设置完毕！");
     };

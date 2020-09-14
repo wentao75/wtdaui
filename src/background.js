@@ -180,6 +180,9 @@ ipcMain.on("data-stock-read", async function(event, args) {
             stockDataNames.daily,
             args.tsCode
         );
+        if (stockDailyData.data && stockDailyData.data.length > 0) {
+            stockDailyData.data = stockDailyData.data.slice(0, 500);
+        }
         stockDailyData.tsCode = args.tsCode;
         event.sender.send("data-stockDaily-ready", stockDailyData);
     } else if (args.name === "stockTrend") {

@@ -1,13 +1,29 @@
 import { ref, onMounted, onUnmounted, watch } from "@vue/composition-api";
 import { ipcRenderer } from "electron";
+import moment from "moment";
 
-export default function(props) {
+export default function(props, updateGraph) {
     const quoteData = ref(null);
+    // let lastTime;
+
+    let beginTime = "092500";
+    let endTime = "150100";
+    const needUpdate = () => {
+        // if (lastTime) {
+        let now = moment();
+        let week = now.day();
+        if (week === 0 || week === 6) return false;
+        // if (now.diff(lastTime, "days") > 0) return true;
+        let nowTime = now.format("HHmmss");
+        if (nowTime >= beginTime && nowTime <= endTime) return true;
+        // }
+        return false;
+    };
 
     let timerQuoteId;
     const refreshQuote = async () => {
         // clearTimeout(timerQuoteId);
-        if (props && props.tsCode) {
+        if (props && props.tsCode && needUpdate()) {
             console.log(`执行实时数据更新 [${props.tsCode}]...`);
 
             ipcRenderer.send("data-stock-read", {
@@ -40,6 +56,7 @@ export default function(props) {
             }
 
             console.log(`实时数据更新完毕！%o`, data);
+            updateGraph(data);
             quoteData.value = data;
         }
     };

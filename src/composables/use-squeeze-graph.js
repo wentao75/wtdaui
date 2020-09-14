@@ -4,7 +4,7 @@ import echarts from "echarts";
 import _ from "lodash";
 import { indicators, utils } from "@wt/lib-stock";
 
-export default function(store, graphElementId, props, quoteData) {
+export default function(store, graphElementId, props) {
     // const tsCode = ref("");
 
     // const downColor = params.downColor;
@@ -201,35 +201,31 @@ export default function(store, graphElementId, props, quoteData) {
                         paramK.name + '<hr size=1 style="margin: 3px 0">',
                         "均值: " +
                             (paramKC && paramKC[0] && paramKC[0].data) +
-                            "<br/>",
-                        "开盘: " +
-                            (paramK && paramK.data && paramK.data[1]) +
-                            "<br/>",
-                        "收盘: " +
-                            (paramK && paramK.data && paramK.data[2]) +
-                            "<br/>",
-                        "最高: " +
-                            (paramK && paramK.data && paramK.data[3]) +
-                            "<br/>",
-                        "最低: " +
-                            (paramK && paramK.data && paramK.data[4]) +
-                            "<br/>",
-                        "KC上沿: " +
-                            (paramKC && paramKC[1] && paramKC[1].data) +
-                            "<br/>",
-                        "KC下沿: " +
-                            (paramKC && paramKC[2] && paramKC[2].data) +
-                            "<br/>",
-                        "BOLL上沿: " +
-                            (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
-                            "<br/>",
-                        "BOLL下沿: " +
-                            (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
-                            "<br/>",
-                        "MTM: " +
+                            " [" +
                             (paramMTM && paramMTM.data && paramMTM.data[1]) +
                             ", " +
-                            (paramMTM && paramMTM.data && paramMTM.data[2])
+                            (paramMTM && paramMTM.data && paramMTM.data[2]) +
+                            "] <br/>",
+                        "开: " +
+                            (paramK && paramK.data && paramK.data[1]) +
+                            "  收: " +
+                            (paramK && paramK.data && paramK.data[2]) +
+                            "<br/>",
+                        "高: " +
+                            (paramK && paramK.data && paramK.data[3]) +
+                            ", 低: " +
+                            (paramK && paramK.data && paramK.data[4]) +
+                            "<br/>",
+                        "KC: [" +
+                            (paramKC && paramKC[1] && paramKC[1].data) +
+                            ", " +
+                            (paramKC && paramKC[2] && paramKC[2].data) +
+                            "] <br/>",
+                        "BOLL: [" +
+                            (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
+                            ", " +
+                            (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
+                            "]<br/>"
                     ].join("");
                 }
                 // extraCssText: 'width: 170px'
@@ -614,14 +610,6 @@ export default function(store, graphElementId, props, quoteData) {
         data => {
             console.log("数据变化，开始DailyGraph处理...");
             dataReady(data);
-        }
-    );
-
-    watch(
-        () => quoteData.update_time,
-        quoteData => {
-            console.log("侦测到实时数据变化，更新图形！");
-            updateGraph(quoteData);
         }
     );
 

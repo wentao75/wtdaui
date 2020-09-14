@@ -149,6 +149,8 @@ export default function(store, graphElementId, props) {
                     let paramKC = [];
                     let paramBOLL = [];
                     let paramMTM;
+                    let paramMTM2;
+                    let paramMTM3;
                     params.forEach(param => {
                         if (param.seriesIndex >= 1 && param.seriesIndex <= 3) {
                             paramKC[param.seriesIndex - 1] = param;
@@ -161,6 +163,10 @@ export default function(store, graphElementId, props) {
                             paramBOLL[param.seriesIndex - 4] = param;
                         } else if (param.seriesIndex === 6) {
                             paramMTM = param;
+                        } else if (param.seriesIndex === 8) {
+                            paramMTM2 = param;
+                        } else if (param.seriesIndex === 9) {
+                            paramMTM3 = param;
                         }
                     });
 
@@ -168,35 +174,36 @@ export default function(store, graphElementId, props) {
                         paramK.name + '<hr size=1 style="margin: 3px 0">',
                         "均值: " +
                             (paramKC && paramKC[0] && paramKC[0].data) +
-                            "<br/>",
-                        "开盘: " +
+                            " [" +
+                            (paramMTM && paramMTM.data && paramMTM.data[2]) +
+                            "] <br/>",
+                        "开: " +
                             (paramK && paramK.data && paramK.data[1]) +
-                            "<br/>",
-                        "收盘: " +
+                            " 收: " +
                             (paramK && paramK.data && paramK.data[2]) +
                             "<br/>",
-                        "最高: " +
+                        "高: " +
                             (paramK && paramK.data && paramK.data[3]) +
-                            "<br/>",
-                        "最低: " +
+                            " 低: " +
                             (paramK && paramK.data && paramK.data[4]) +
                             "<br/>",
-                        "KC上沿: " +
+                        "KC  : [" +
                             (paramKC && paramKC[1] && paramKC[1].data) +
-                            "<br/>",
-                        "KC下沿: " +
+                            ", " +
                             (paramKC && paramKC[2] && paramKC[2].data) +
-                            "<br/>",
-                        "BOLL上沿: " +
+                            "] <br/>",
+                        "BOLL: [" +
                             (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
-                            "<br/>",
-                        "BOLL下沿: " +
+                            ", " +
                             (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
-                            "<br/>",
-                        "MTM: " +
+                            "] <br/>",
+                        "MTM: [" +
                             (paramMTM && paramMTM.data && paramMTM.data[1]) +
                             ", " +
-                            (paramMTM && paramMTM.data && paramMTM.data[2])
+                            (paramMTM2 && paramMTM2.data) +
+                            ", " +
+                            (paramMTM3 && paramMTM3.data) +
+                            "] <br/>"
                     ].join("");
                 }
                 // extraCssText: 'width: 170px'
@@ -550,20 +557,23 @@ export default function(store, graphElementId, props) {
         console.log("trend 数据设置完毕！");
     };
 
+    const updateGraph = rtData => {
+        console.log(`更新图形！%o`, rtData);
+        if (dailyData) {
+            let updatedData = splitData(dailyData);
+            let option = getGraphOption(updatedData);
+
+            dailyChart.setOption(option, true);
+        }
+    };
+
     onMounted(() => {
-        console.log("trend onMounted");
+        console.log("ttm squeeze onMounted");
         dataReady(props.data);
-        // if (dailyChart) {
-        //     dailyChart.resize();
-        // }
-        // watchEffect(() => {
-        // watch(props, () => {
-        //     dataReady(); //props.dailyData);
-        // });
     });
 
     onUnmounted(() => {
-        console.log("trend onUnmounted");
+        console.log("ttm squeeze onUnmounted");
         if (dailyChart !== null) {
             dailyChart.clear();
             dailyChart.dispose();
@@ -574,12 +584,13 @@ export default function(store, graphElementId, props) {
     watch(
         () => props.data,
         data => {
-            console.log("数据变化，开始trendGraph处理...");
+            console.log("数据变化，开始TTM Squeeze Graph处理...");
             dataReady(data);
         }
     );
 
     return {
-        dataReady
+        dataReady,
+        updateGraph
     };
 }

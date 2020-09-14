@@ -5,6 +5,8 @@
 <script>
 import { useStore } from "../composables/use-store.js";
 import useSqueezeGraph from "../composables/use-ttm-squeeze-graph.js";
+import useQuoteData from "../composables/use-update-quote.js";
+import { watch, watchEffect } from "@vue/composition-api";
 
 export default {
     name: "DailyGraph",
@@ -26,10 +28,28 @@ export default {
 
     setup(props) {
         const store = useStore();
-        const { dataReady } = useSqueezeGraph(store, "graph", props);
+        const { dataReady, updateGraph } = useSqueezeGraph(
+            store,
+            "graph",
+            props
+        );
+        const { quoteData } = useQuoteData(props, updateGraph);
+
+        watch(
+            () => quoteData && quoteData.update_time,
+            quoteData => {
+                console.log("侦测到实时数据变化，更新图形！");
+                updateGraph(quoteData);
+            }
+        );
+
+        watchEffect(() => {
+            console.log(`watch effect quote data: %o`, quoteData);
+        });
 
         return {
-            dataReady
+            dataReady,
+            quoteData
         };
     }
 };

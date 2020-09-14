@@ -34,7 +34,8 @@ export default function(store, graphElementId, props) {
             km: (props && props.params.m) || 1.5,
             mt: "AO", // "MTM"
             mn: 5,
-            mm: 11,
+            mm: 12,
+            mmsource: "hl",
             digits
         });
 

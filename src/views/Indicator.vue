@@ -9,13 +9,21 @@
                 clearable
             ></el-autocomplete>
             <el-radio-group v-model="activeGraph">
+                <el-radio-button label="daily" value="daily"
+                    >日常</el-radio-button
+                >
                 <el-radio-button label="squeeze" value="squeeze"
-                    >Sequeeze</el-radio-button
+                    >鸡排</el-radio-button
                 >
             </el-radio-group>
         </el-header>
         <el-main v-loading="loading || !$store.state.initDataFinished">
             <DailyGraph
+                v-if="activeGraph === 'daily'"
+                :tsCode="selectedTsCode"
+                :data="dailyData"
+            />
+            <SqueezeGraph
                 v-if="activeGraph === 'squeeze'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
@@ -30,12 +38,13 @@ import { useSearchStock } from "../composables/use-search-stock.js";
 
 // @ is an alias to /src
 import DailyGraph from "@/components/DailyGraph.vue";
+import SqueezeGraph from "../components/SqueezeGraph.vue";
 
 export default {
     name: "StockHome",
     data() {
         return {
-            activeGraph: "squeeze"
+            activeGraph: "daily"
         };
     },
     setup() {
@@ -60,7 +69,8 @@ export default {
     },
 
     components: {
-        DailyGraph
+        DailyGraph,
+        SqueezeGraph
     }
 };
 </script>

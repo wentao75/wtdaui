@@ -1,15 +1,13 @@
+/**
+ * 这个图的目标是在Squeeze基础上添加动能长中短期的波动对比，用以确认方向和是否保持交易
+ *
+ */
 import { onMounted, onUnmounted, watch } from "@vue/composition-api";
-// import { ipcRenderer } from "electron";
 import echarts from "echarts";
 import _ from "lodash";
 import { indicators, utils } from "@wt/lib-stock";
 
-export default function(store, graphElementId, props, quoteData) {
-    // const tsCode = ref("");
-
-    // const downColor = params.downColor;
-    // const upColor = params.upColor;
-
+export default function(store, graphElementId, props) {
     let dailyData = null;
     let dailyChart = null;
 
@@ -22,10 +20,12 @@ export default function(store, graphElementId, props, quoteData) {
         let dailyData = stockData.data; //.reverse();
         utils.checkTradeData(dailyData);
 
-        // let kcData = KC.keltner(dailyData, { n: 20, m: 1.5 });
         let source = "close";
+        let msource = "hl";
         console.log(`params: %o`, props.params);
         let digits = 3;
+
+        // 基础的Squeeze数据
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
             source,
             ma: "ema",
@@ -34,40 +34,22 @@ export default function(store, graphElementId, props, quoteData) {
             km: (props && props.params.m) || 1.5,
             mt: "AO", // "MTM"
             mn: 5,
-            mm: 12,
+            mm: 11,
             digits
         });
 
-        let kcData = indicators.KC.calculate(dailyData, {
-            n: 14,
-            m: 1.5,
-            type1: "ema",
-            type2: "ma",
-            source,
+        let mtmData2 = indicators.AO.calculate(dailyData, {
+            n: 5,
+            m: 22,
+            source: msource,
             digits
         });
-        // let bollData = indicators.BOLL.calculate(dailyData, {
-        //     n: (props && props.params.n) || 20,
-        //     m: (props && props.params.bm) || 2,
-        //     ma: "ema",
-        //     source,
-        //     digits
-        // });
-
-        // // let mtmData = indicators.MTM.calculate(dailyData, {
-        // //     n: 12,
-        // //     m: 20,
-        // //     source
-        // // digits
-        // //     // source: "close"
-        // // });
-        // let mtmData = indicators.AO.calculate(dailyData, {
-        //     n: 5,
-        //     m: 12,
-        //     source,
-        //     digits
-        //     // source: "close"
-        // });
+        let mtmData3 = indicators.AO.calculate(dailyData, {
+            n: 5,
+            m: 35,
+            source: msource,
+            digits
+        });
 
         for (let i = 0; i < dailyData.length; i++) {
             categoryData.push(dailyData[i].trade_date);
@@ -85,28 +67,13 @@ export default function(store, graphElementId, props, quoteData) {
             }
 
             squeezeData[5][i] = [i, squeezeData[5][i], squeezeData[6][i]];
-
-            // changes.push([
-            //     dailyData[i].trade_date,
-            //     _.round(
-            //         ((dailyData[i].high - dailyData[i].low) * 100) /
-            //             dailyData[i].open,
-            //         2
-            //     )
-            // ]);
-            // volumes.push([
-            //     i,
-            //     dailyData[i].vol,
-            //     dailyData[i].open > dailyData[i].close ? 1 : -1
-            // ]);
         }
 
         return {
             categoryData: categoryData,
             values: values,
-            kc: kcData,
-            // boll: bollData,
-            // mtm: mtmData,
+            mtm2: mtmData2,
+            mtm3: mtmData3,
             squeeze: squeezeData,
             flags: squeezeFlags,
             info: stockData.info
@@ -250,13 +217,19 @@ export default function(store, graphElementId, props, quoteData) {
                     left: "5%",
                     right: "5%",
                     top: "51%", //"73%",
-                    height: "24%"
+                    height: "13%"
                 },
                 {
                     left: "5%",
                     right: "5%",
-                    top: "79%",
-                    height: "15%"
+                    top: "65%",
+                    height: "13%"
+                },
+                {
+                    left: "5%",
+                    right: "5%",
+                    top: "80%",
+                    height: "13%"
                 }
             ],
             xAxis: [
@@ -283,6 +256,7 @@ export default function(store, graphElementId, props, quoteData) {
                     axisLine: { onZero: false },
                     axisTick: { show: false },
                     splitLine: { show: false },
+                    axisLabel: { show: false },
                     splitNumber: 20,
                     min: "dataMin",
                     max: "dataMax"
@@ -290,6 +264,20 @@ export default function(store, graphElementId, props, quoteData) {
                 {
                     type: "category",
                     gridIndex: 2,
+                    data: data.categoryData,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { onZero: false },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    splitNumber: 20,
+                    min: "dataMin",
+                    max: "dataMax"
+                },
+                {
+                    type: "category",
+                    gridIndex: 3,
                     data: data.categoryData,
                     scale: true,
                     boundaryGap: false,
@@ -312,13 +300,14 @@ export default function(store, graphElementId, props, quoteData) {
                             type: "dashed"
                         }
                     }
-                    // splitArea: {
-                    //     show: true
-                    // }
                 },
                 {
                     scale: true,
                     gridIndex: 1,
+                    splitNumber: 3,
+                    axisLabel: { show: true },
+                    axisLine: { show: false },
+                    axisTick: { show: true },
                     splitLine: {
                         show: true,
                         lineStyle: {
@@ -341,18 +330,33 @@ export default function(store, graphElementId, props, quoteData) {
                             type: "dashed"
                         }
                     }
+                },
+                {
+                    scale: true,
+                    gridIndex: 3,
+                    splitNumber: 3,
+                    axisLabel: { show: true },
+                    axisLine: { show: false },
+                    axisTick: { show: true },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color: "#777",
+                            type: "dashed"
+                        }
+                    }
                 }
             ],
             dataZoom: [
                 {
                     type: "inside",
-                    xAxisIndex: [0, 1, 2],
+                    xAxisIndex: [0, 1, 2, 3],
                     start: start,
                     end: 100
                 },
                 {
                     show: true,
-                    xAxisIndex: [0, 1, 2],
+                    xAxisIndex: [0, 1, 2, 3],
                     type: "slider",
                     top: "96%",
                     start: start,
@@ -361,6 +365,7 @@ export default function(store, graphElementId, props, quoteData) {
             ],
             series: [
                 {
+                    // 0
                     name: "K线",
                     type: "candlestick",
                     data: data && data.values,
@@ -372,13 +377,12 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 1
                     name: "挤牌-均值",
                     type: "line",
                     data: data && data.squeeze && data.squeeze[0],
                     symbol: "none",
                     smooth: false,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
                     lineStyle: {
                         color: "#ff0",
                         opacity: 0.5,
@@ -386,13 +390,12 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 2
                     name: "挤牌-K上",
                     type: "line",
                     data: data && data.squeeze && data.squeeze[3],
                     showSymbol: false,
                     smooth: false,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
                     lineStyle: {
                         color: "#0ff",
                         width: 2,
@@ -400,13 +403,12 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 3
                     name: "挤牌-K下",
                     type: "line",
                     data: data && data.squeeze && data.squeeze[4],
                     showSymbol: false,
                     smooth: false,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
                     lineStyle: {
                         color: "#0ff",
                         width: 2,
@@ -414,13 +416,12 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 4
                     name: "挤牌-B上",
                     type: "line",
                     data: data && data.squeeze && data.squeeze[1],
                     showSymbol: false,
                     smooth: false,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
                     lineStyle: {
                         color: "#bbb",
                         width: 1,
@@ -428,13 +429,12 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 5
                     name: "挤牌-B下",
                     type: "line",
                     data: data && data.squeeze && data.squeeze[2],
                     showSymbol: false,
                     smooth: false,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
                     lineStyle: {
                         color: "#bbb",
                         width: 1,
@@ -442,16 +442,18 @@ export default function(store, graphElementId, props, quoteData) {
                     }
                 },
                 {
+                    // 6
                     name: "挤牌-能量",
                     type: "bar", //"line",
                     data: data && data.squeeze && data.squeeze[5],
                     symbol: "none",
                     symbolSize: 3,
                     // smooth: true,
-                    xAxisIndex: 2,
-                    yAxisIndex: 2
+                    xAxisIndex: 1,
+                    yAxisIndex: 1
                 },
                 {
+                    // 7
                     name: "挤牌-标记",
                     type: "scatter", //"line",
                     data: data && data.flags,
@@ -461,57 +463,30 @@ export default function(store, graphElementId, props, quoteData) {
                         borderType: "solid",
                         opacity: 1
                     },
+                    xAxisIndex: 1,
+                    yAxisIndex: 1
+                },
+                {
+                    // 8
+                    name: "挤牌-能量 B",
+                    type: "bar", //"line",
+                    data: data && data.mtm2,
+                    symbol: "none",
+                    symbolSize: 3,
+                    // smooth: true,
                     xAxisIndex: 2,
                     yAxisIndex: 2
                 },
                 {
-                    name: "ATR-均值",
-                    type: "line",
-                    data: data && data.kc && data.kc[0],
+                    // 9
+                    name: "挤牌-能量 C",
+                    type: "bar", //"line",
+                    data: data && data.mtm3,
                     symbol: "none",
-                    smooth: false,
-                    lineStyle: {
-                        color: "#ff0",
-                        opacity: 1,
-                        width: 1
-                    }
-                },
-                {
-                    name: "ATR-上",
-                    type: "line",
-                    data: data && data.kc && data.kc[1],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#0ff",
-                        width: 2,
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "ATR-下",
-                    type: "line",
-                    data: data && data.kc && data.kc[2],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#0ff",
-                        width: 2,
-                        opacity: 1
-                    }
-                },
-                {
-                    name: "K线",
-                    type: "candlestick",
-                    data: data && data.values,
-                    itemStyle: {
-                        color: props.params.upColor,
-                        color0: props.params.downColor,
-                        borderColor: null,
-                        borderColor0: null
-                    },
-                    xAxisIndex: 1,
-                    yAxisIndex: 1
+                    symbolSize: 3,
+                    // smooth: true,
+                    xAxisIndex: 3,
+                    yAxisIndex: 3
                 }
             ],
             visualMap: [
@@ -542,7 +517,7 @@ export default function(store, graphElementId, props, quoteData) {
     };
 
     const dataReady = rawData => {
-        console.log("daily squeeze 处理数据 ...");
+        console.log("trend 处理数据 ...");
         let graphElement = document.getElementById(graphElementId);
 
         if (dailyChart === null) {
@@ -572,25 +547,12 @@ export default function(store, graphElementId, props, quoteData) {
         //     name: "均值"
         // });
         dailyChart.resize();
-
-        // timerQuoteId = setTimeout(refreshTodayQuote, 0);
-        console.log("daily squeeze 数据设置完毕！");
-    };
-
-    const updateGraph = rtData => {
-        console.log(`更新图形！%o`, rtData);
-        if (dailyData) {
-            let updatedData = splitData(dailyData);
-            let option = getGraphOption(updatedData);
-
-            dailyChart.setOption(option, true);
-        }
+        console.log("trend 数据设置完毕！");
     };
 
     onMounted(() => {
-        console.log("daily squeeze onMounted");
+        console.log("trend onMounted");
         dataReady(props.data);
-
         // if (dailyChart) {
         //     dailyChart.resize();
         // }
@@ -601,7 +563,7 @@ export default function(store, graphElementId, props, quoteData) {
     });
 
     onUnmounted(() => {
-        console.log("daily  squeeze onUnmounted");
+        console.log("trend onUnmounted");
         if (dailyChart !== null) {
             dailyChart.clear();
             dailyChart.dispose();
@@ -612,21 +574,12 @@ export default function(store, graphElementId, props, quoteData) {
     watch(
         () => props.data,
         data => {
-            console.log("数据变化，开始DailyGraph处理...");
+            console.log("数据变化，开始trendGraph处理...");
             dataReady(data);
         }
     );
 
-    watch(
-        () => quoteData.update_time,
-        quoteData => {
-            console.log("侦测到实时数据变化，更新图形！");
-            updateGraph(quoteData);
-        }
-    );
-
     return {
-        dataReady,
-        updateGraph
+        dataReady
     };
 }

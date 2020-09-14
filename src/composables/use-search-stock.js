@@ -1,6 +1,7 @@
 import { ref, onMounted, onUnmounted } from "@vue/composition-api";
 import { ipcRenderer } from "electron";
 import _ from "lodash";
+import { utils } from "@wt/lib-stock";
 
 export function useSearchStock(
     store,
@@ -63,41 +64,58 @@ export function useSearchStock(
         if (rawData) {
             let info = store.getters.queryInfoByCode(rawData.tsCode);
             rawData.info = info;
+            utils.checkTradeData(rawData.data);
 
             dailyData.value = rawData;
             console.log(
-                `日线数据长度：${dailyData.vale &&
+                `日线数据长度：${dailyData.value &&
                     dailyData.value.data &&
                     dailyData.value.data.length}, ${rawData.tsCode}, %o`,
                 info
             );
         }
-
-        // let graphElement = document.getElementById("graph");
-        // if (this.dailyChart === null) {
-        //     // this.dailyChart.clear();
-        //     // this.dailyChart.dispose();
-        //     this.dailyChart = this.echarts.init(graphElement);
-        //     window.addEventListener("resize", () => {
-        //         this.dailyChart.resize();
-        //     });
-        // }
-
-        // let info = this.$store.getters.queryInfoByCode(rawData.tsCode);
-        // rawData.info = info;
-        // this.dailyData = rawData;
-        // console.log(
-        //     `日线数据长度：${this.dailyData &&
-        //         this.dailyData.data &&
-        //         this.dailyData.data.length}, ${rawData.tsCode}, %o`,
-        //     info
-        // );
-
-        // let data = this.splitData(this.dailyData);
-        // let option = this.getGraphOption(data);
-        // this.dailyChart.setOption(option, true);
-        // this.dailyChart.resize();
     };
+
+    // let timerQuoteId;
+    // const refreshTodayQuote = async () => {
+    //     if (dailyData && dailyData.tsCode) {
+    //         console.log(`执行实时数据更新 [${dailyData.tsCode}]...`);
+
+    //         ipcRenderer.send("data-stock-read", {
+    //             name: "rtQuote",
+    //             tsCode: dailyData.tsCode
+    //         });
+    //     }
+
+    //     timerQuoteId = setTimeout(refreshTodayQuote, 30 * 1000);
+    //     console.log(`${timerQuoteId} added!`);
+    // };
+
+    // const rtDataReady = (event, data) => {
+    //     console.log(`接收实时数据：%o`, data);
+    //     // 已经接收到最新数据，更新并添加到数据中，然后更新图示
+
+    //     if (dailyData && dailyData.data && dailyData.data.length > 0 && data) {
+    //         let lastData = dailyData.data[dailyData.data.length - 1];
+    //         console.log(
+    //             `比较更新数据[${dailyData.data.length}]：${lastData.trade_date} ${data.trade_date}`
+    //         );
+    //         if (lastData.trade_date === data.trade_date) {
+    //             dailyData.data[dailyData.length - 1] = data;
+    //         } else if (lastData.trade_date < data.trade_date) {
+    //             data.adj_factor = lastData.adj_factor;
+    //             dailyData.data.push(data);
+    //         } else {
+    //             return;
+    //         }
+
+    //         // console.log("更新图形！");
+    //         // let updatedData = splitData(dailyData);
+    //         // let option = getGraphOption(updatedData);
+
+    //         // dailyChart.setOption(option, true);
+    //     }
+    // };
 
     onMounted(() => {
         // 设置返回数据响应
@@ -106,17 +124,14 @@ export function useSearchStock(
         } else {
             ipcRenderer.on("data-stockDaily-ready", dataReady);
         }
+
+        // ipcRenderer.on("data-rtQuote-ready", rtDataReady);
         // 初始化数据读取
         console.log(`${dataType} 初始化！`);
         initRefreshGraph();
     });
 
-    // onUnmounted() {},
     onUnmounted(() => {
-        // if (this.dailyChart !== null) {
-        //     this.dailyChart.clear();
-        //     this.dailyChart.dispose();
-        // }
         console.log("remove all listeners in stock daily!");
         if (dataType === "stockTrend") {
             ipcRenderer.removeAllListeners("data-stockTrend-ready");

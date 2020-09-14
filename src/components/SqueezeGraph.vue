@@ -4,9 +4,7 @@
 
 <script>
 import { useStore } from "../composables/use-store.js";
-import useSqueezeGraph from "../composables/use-squeeze-graph.js";
-import useQuoteData from "../composables/use-update-quote.js";
-// import { watch } from "@vue/composition-api";
+import useSqueezeGraph from "../composables/use-ttm-squeeze-graph.js";
 
 export default {
     name: "DailyGraph",
@@ -28,12 +26,10 @@ export default {
 
     setup(props) {
         const store = useStore();
-        const { quoteData } = useQuoteData(props);
-        const { dataReady } = useSqueezeGraph(store, "graph", props, quoteData);
+        const { dataReady } = useSqueezeGraph(store, "graph", props);
 
         return {
-            dataReady,
-            quoteData
+            dataReady
         };
     }
 };

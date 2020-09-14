@@ -13,6 +13,7 @@ import {
     stockDataNames
 } from "@wt/lib-wtda-query";
 
+import xueqiu from "./data/xueqiu";
 import log from "electron-log";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -193,5 +194,15 @@ ipcMain.on("data-stock-read", async function(event, args) {
         //stockTrendData.info = _stockListMap[args.tsCode];
         stockTrendData.tsCode = args.tsCode;
         event.sender.send("data-stockTrend-ready", stockTrendData);
+    } else if (args.name === "rtQuote") {
+        log.info(`rtQuote 事件：, %o`, args);
+        console.log("rtQuote 事件：%o", args);
+        try {
+            let quoteData = await xueqiu.readXueqiuQuotec(args.tsCode);
+            log.info(`rtQuote 返回: %o`, quoteData);
+            event.sender.send("data-rtQuote-ready", quoteData);
+        } catch (error) {
+            console.error(`读取实时数据错误: %o`, error);
+        }
     }
 });

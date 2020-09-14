@@ -35,6 +35,7 @@ export default function(store, graphElementId, props) {
             mt: "AO", // "MTM"
             mn: 5,
             mm: 12,
+            mmsource: "hl",
             digits
         });
 

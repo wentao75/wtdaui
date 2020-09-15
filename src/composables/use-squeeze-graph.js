@@ -462,7 +462,7 @@ export default function(store, graphElementId, props) {
                     xAxisIndex: 1,
                     yAxisIndex: 1,
                     lineStyle: {
-                        color: "#bbb",
+                        color: "#ff69b4",
                         width: 1,
                         opacity: 0.5
                     }
@@ -477,7 +477,7 @@ export default function(store, graphElementId, props) {
                     xAxisIndex: 1,
                     yAxisIndex: 1,
                     lineStyle: {
-                        color: "#bbb",
+                        color: "#ff69b4",
                         width: 1,
                         opacity: 0.5
                     }

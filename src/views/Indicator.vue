@@ -2,12 +2,18 @@
     <el-container>
         <el-header>
             <el-autocomplete
+                popper-class="my-autocomplete"
                 placeholder="请输入股票代码"
                 v-model="tsCode"
                 :fetch-suggestions="queryStockCode"
                 @select="handleSelect"
                 clearable
-            ></el-autocomplete>
+            >
+                <template slot-scope="{ item }">
+                    <span class="stockcode"> {{ item.value }}</span
+                    ><span class="stockname">{{ item.name }}</span>
+                </template>
+            </el-autocomplete>
             <el-radio-group v-model="activeGraph">
                 <el-radio-button label="daily" value="daily"
                     >日常</el-radio-button
@@ -76,9 +82,28 @@ export default {
 </script>
 
 <style>
-.el-autocomplete {
-    margin: 10px;
+.my-autocomplete {
+    margin: 12px;
 }
+
+.my-autocomplete li {
+    line-height: 24px;
+    padding: 7px;
+}
+
+.stockcode {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.stockname {
+    float: right;
+    color: #b4b4b4;
+}
+
+.highlighted .stockname {
+    color: #ddd;
+}
+
 .el-tab-pane .el-tabs {
     padding: 0px;
     margin: 0px;

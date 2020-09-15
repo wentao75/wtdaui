@@ -13,6 +13,8 @@ import {
     stockDataNames
 } from "@wt/lib-wtda-query";
 
+import { favorites } from "@wt/lib-stock";
+
 import xueqiu from "./data/xueqiu";
 import log from "electron-log";
 
@@ -140,7 +142,40 @@ async function prepareStockList() {
                 indexListData.data &&
                 indexListData.data.length}`
         );
-        return { stock: stockListData.data, index: indexListData.data };
+        let favoritesData = await favorites.readFavorites();
+        if (!favoritesData || _.isEmpty(favoritesData.favorites)) {
+            await favorites.addFavorites([
+                "600036.SH",
+                "600276.SH",
+                "600489.SH",
+                "601318.SH",
+                "000725.SZ",
+                "000568.SZ",
+                "002352.SZ"
+            ]);
+        }
+        log.info(
+            `读取自选列表：${favoritesData &&
+                favoritesData.favorites &&
+                favoritesData.favorites.length}`
+        );
+        let favList = [];
+        for (let code of favoritesData.favorites) {
+            for (let stock of stockListData.data) {
+                if (code.match(stock.ts_code)) {
+                    favList.push({
+                        value: code,
+                        ts_code: code,
+                        name: stock.name
+                    });
+                }
+            }
+        }
+        return {
+            stock: stockListData.data,
+            index: indexListData.data,
+            favorites: favList
+        };
     } catch (error) {
         log.error(`读取股票/指数列表时发生异常：${error}`);
         console.error(`读取股票/指数列表时发生异常：${error}`);

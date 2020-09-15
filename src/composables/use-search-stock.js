@@ -5,9 +5,15 @@ import { utils } from "@wt/lib-stock";
 
 export function useSearchStock(
     store,
-    dataType = "stockTrend",
-    defaultCode = "000001.SZ"
+    dataType = "stockTrend"
+    // defaultCode = "000001.SZ"
 ) {
+    let defaultCode = "000001.SZ";
+    let defaultList = store.getters.queryCodes("");
+    if (!_.isEmpty(defaultList) && _.isArray(defaultList)) {
+        defaultCode = defaultList[0].value;
+    }
+
     const tsCode = ref(defaultCode);
     const selectedTsCode = ref(defaultCode);
     const loading = ref(false);
@@ -20,7 +26,7 @@ export function useSearchStock(
             // 这里调整到通过vuex store传入来处理
             let infos = store.getters.queryCodes(queryString);
             // log.info(`结果：${infos && infos.length}`);
-            console.log(`结果：${infos && infos.length}`);
+            console.log(`结果：${infos && infos.length}, %o`, infos);
             cb(infos);
         }, 0);
     };

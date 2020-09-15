@@ -9,7 +9,8 @@ export default new Vuex.Store({
         initDataFinished: false,
         symbolMap: null,
         stockList: null,
-        indexList: null
+        indexList: null,
+        favoriteList: null
     },
     getters: {
         queryCodeBySymbol: state => symbol => {
@@ -33,7 +34,7 @@ export default new Vuex.Store({
         // 通过输入字符串过滤查询符合的股票代码列表
         queryCodes: state => query => {
             // 使用字符串查询是否有匹配的代码
-            if (_.isEmpty(query)) return [];
+            if (_.isEmpty(query)) return state.favoriteList;
             let codes = [];
             for (let code of state.stockList.keys()) {
                 if (code.match(query)) {
@@ -46,6 +47,19 @@ export default new Vuex.Store({
                     let tmp = state.indexList.get(code);
                     codes.push({ value: code, name: tmp.name, stock: tmp });
                 }
+            }
+            for (let stock of state.stockList.values()) {
+                if (stock.name.match(query)) {
+                    codes.push({
+                        value: stock.ts_code,
+                        name: stock.name,
+                        stock
+                    });
+                }
+            }
+            for (let fav of state.favoriteList) {
+                if (fav.ts_code.match(query)) continue;
+                codes.push(fav);
             }
             return codes;
         }
@@ -66,6 +80,9 @@ export default new Vuex.Store({
         setSymbols(state, data) {
             console.log(`setSymbols`);
             state.symbolMap = data;
+        },
+        setFavorites(state, data) {
+            state.favoriteList = data;
         }
     },
     actions: {
@@ -125,6 +142,7 @@ export default new Vuex.Store({
             commit("setIndexList", tmpIndexMap);
             commit("setSymbols", tmpSymbolMap);
 
+            commit("setFavorites", data.favorites);
             tmpIndexMap = null;
             tmpStockMap = null;
             tmpSymbolMap = null;

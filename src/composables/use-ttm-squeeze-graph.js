@@ -28,7 +28,7 @@ export default function(store, graphElementId, props) {
         // 基础的Squeeze数据
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
             source,
-            ma: "ema",
+            ma: "ma",
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,

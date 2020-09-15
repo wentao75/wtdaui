@@ -32,33 +32,81 @@ export default function(store, graphElementId, props) {
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,
-            mt: "AO", // "MTM"
-            mn: 5,
-            mm: 12,
+            mt: "MTM", // "MTM"
+            mn: 12,
+            mm: 1,
             mmsource: "hl",
             digits
         });
 
-        let mtmData2 = indicators.AO.calculate(dailyData, {
-            n: 5,
-            m: 22,
+        let mtmData2 = indicators.MTM.calculate(dailyData, {
+            n: 22,
+            m: 5,
             source: msource,
             digits
         });
-        let mtmData3 = indicators.AO.calculate(dailyData, {
-            n: 5,
-            m: 35,
+        let mtmData3 = indicators.MTM.calculate(dailyData, {
+            n: 60,
+            m: 20,
             source: msource,
             digits
         });
+        // let mtmData2 = indicators.AO.calculate(dailyData, {
+        //     n: 5,
+        //     m: 22,
+        //     source: msource,
+        //     digits
+        // });
+        // let mtmData3 = indicators.AO.calculate(dailyData, {
+        //     n: 5,
+        //     m: 35,
+        //     source: msource,
+        //     digits
+        // });
 
         for (let i = 0; i < dailyData.length; i++) {
             categoryData.push(dailyData[i].trade_date);
+            let up = dailyData[i].close - dailyData[i].open >= 0;
+            if (i > 0) {
+                let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
+                let c =
+                    (dailyData[i].open +
+                        dailyData[i].high +
+                        dailyData[i].low +
+                        dailyData[i].close) /
+                    4;
+                up = c >= o;
+            }
+            // if (i > 6) {
+            //     let min;
+            //     let max;
+            //     let sum = 0;
+            //     let avg = 0;
+            //     for (let j = 0; j < 6; j++) {
+            //         if (!min || min > dailyData[i - 1 - j].low)
+            //             min = dailyData[i - 1 - j].low;
+            //         if (!max || max < dailyData[i - 1 - j].high)
+            //             max = dailyData[i - 1 - j].high;
+            //         sum += dailyData[i - 1 - j].close;
+            //         avg +=
+            //             (dailyData[i - 1 - j].open +
+            //                 dailyData[i - 1 - j].high +
+            //                 dailyData[i - 1 - j].low +
+            //                 dailyData[i - 1 - j].close) /
+            //             4;
+            //     }
+            //     sum = sum / 6;
+            //     avg = avg / 6;
+            //     //up = sum >= min + (max - min) / 2;
+            //     up = avg < (min + max) / 2;
+            // }
             values.push([
+                dailyData[i].trade_date,
                 dailyData[i].open,
                 dailyData[i].close,
+                dailyData[i].low,
                 dailyData[i].high,
-                dailyData[i].low
+                up
             ]);
 
             if (squeezeData[6][i] === indicators.SQUEEZE.states.READY) {
@@ -78,6 +126,98 @@ export default function(store, graphElementId, props) {
             squeeze: squeezeData,
             flags: squeezeFlags,
             info: stockData.info
+        };
+    };
+
+    const renderAMK = (params, api) => {
+        let xValue = api.value(0);
+        let openPoint = api.coord([xValue, api.value(1)]);
+        let closePoint = api.coord([xValue, api.value(2)]);
+        let lowPoint = api.coord([xValue, api.value(3)]);
+        let highPoint = api.coord([xValue, api.value(4)]);
+        let up = api.value(5);
+
+        let halfWidth = api.size([1, 0])[0] * 0.25;
+        let style = api.style({
+            stroke: up ? "#f00" : "#0f0",
+            fill: up ? "#f00" : "#0f0"
+        });
+
+        // let hPoint;
+        // let lPoint;
+        // if (api.value(1) > api.value(2)) {
+        //     hPoint = openPoint;
+        //     lPoint = closePoint;
+        // } else {
+        //     hPoint = closePoint;
+        //     lPoint = openPoint;
+        // }
+        return {
+            type: "group",
+            children: [
+                {
+                    type: "line",
+                    shape: {
+                        x1: lowPoint[0],
+                        y1: lowPoint[1],
+                        x2: highPoint[0],
+                        y2: highPoint[1]
+                    },
+                    style: style
+                },
+                {
+                    type: "line",
+                    shape: {
+                        x1: openPoint[0],
+                        y1: openPoint[1],
+                        x2: openPoint[0] - halfWidth,
+                        y2: openPoint[1]
+                    },
+                    style: style
+                },
+                {
+                    type: "line",
+                    shape: {
+                        x1: closePoint[0],
+                        y1: closePoint[1],
+                        x2: closePoint[0] + halfWidth,
+                        y2: closePoint[1]
+                    },
+                    style: style
+                }
+            ]
+            //     children: [
+            //     {
+            //         type: "line",
+            //         shape: {
+            //             x1: lowPoint[0],
+            //             y1: lowPoint[1],
+            //             x2: lPoint[0],
+            //             y2: lPoint[1]
+            //         },
+            //         style: style
+            //     },
+            //     {
+            //         type: "line",
+            //         shape: {
+            //             x1: hPoint[0],
+            //             y1: hPoint[1],
+            //             x2: highPoint[0],
+            //             y2: highPoint[1]
+            //         },
+            //         style: style
+            //     },
+            //     {
+            //         type: "rect",
+            //         shape: {
+            //             x: hPoint[0] - halfWidth,
+            //             y: hPoint[1],
+            //             width: halfWidth * 2,
+            //             height: lPoint[1] - hPoint[1]
+            //         },
+            //         style: style
+            //     }
+            // ]
         };
     };
 
@@ -375,8 +515,15 @@ export default function(store, graphElementId, props) {
                 {
                     // 0
                     name: "K线",
-                    type: "candlestick",
+                    //type: "candlestick",
+                    type: "custom",
+                    renderItem: renderAMK,
                     data: data && data.values,
+                    encode: {
+                        x: 0,
+                        y: [1, 2, 3, 4],
+                        tooltip: [1, 2, 3, 4]
+                    },
                     itemStyle: {
                         color: props.params.upColor,
                         color0: props.params.downColor,
@@ -516,6 +663,22 @@ export default function(store, graphElementId, props) {
                     seriesIndex: 6,
                     dimensions: 6
                 }
+                // {
+                //     type: "piecewise",
+                //     pieces: [
+                //         {
+                //             gte: 0,
+                //             color: "#f00"
+                //         },
+                //         {
+                //             lt: 0,
+                //             color: "#0f0"
+                //         }
+                //     ],
+                //     show: false,
+                //     seriesIndex: 0,
+                //     dimensions: 4
+                // }
             ]
         };
     };
@@ -564,7 +727,7 @@ export default function(store, graphElementId, props) {
             let updatedData = splitData(dailyData);
             let option = getGraphOption(updatedData);
 
-            dailyChart.setOption(option, true);
+            dailyChart.setOption(option, false);
         }
     };
 

@@ -12,6 +12,7 @@ export default function(store, graphElementId, props) {
 
     let dailyData = null;
     let dailyChart = null;
+    let currentGraphOption = null;
 
     const splitData = stockData => {
         var categoryData = [];
@@ -75,8 +76,8 @@ export default function(store, graphElementId, props) {
             values.push([
                 dailyData[i].open,
                 dailyData[i].close,
-                dailyData[i].high,
-                dailyData[i].low
+                dailyData[i].low,
+                dailyData[i].high
             ]);
 
             if (squeezeData[6][i] === indicators.SQUEEZE.states.READY) {
@@ -590,6 +591,23 @@ export default function(store, graphElementId, props) {
                     show: false,
                     seriesIndex: 6,
                     dimensions: 6
+                },
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            gte: 0,
+                            color: "#F00",
+                            opacity: 0.5
+                        },
+                        {
+                            lt: 0,
+                            color: "#0F0",
+                            opacity: 0.5
+                        }
+                    ],
+                    show: false,
+                    seriesIndex: 12
                 }
             ]
         };
@@ -622,9 +640,9 @@ export default function(store, graphElementId, props) {
         );
 
         let data = splitData(dailyData);
-        let option = getGraphOption(data);
+        currentGraphOption = getGraphOption(data);
 
-        dailyChart.setOption(option, true);
+        dailyChart.setOption(currentGraphOption, true);
         // dailyChart.dispatchAction({
         //     type: "legendUnSelect",
         //     name: "均值"
@@ -635,13 +653,83 @@ export default function(store, graphElementId, props) {
         console.log("daily squeeze 数据设置完毕！");
     };
 
+    const updateGraphOption = (option, data) => {
+        //     values: values,
+        //     kc: kcData,
+        //     mtm: mtmData,
+        //     squeeze: squeezeData,
+        //     flags: squeezeFlags,
+        let series = option.series;
+        let data0 = series[0].data;
+
+        if (
+            data &&
+            data.values &&
+            data.values.length === data0.length &&
+            data0.length > 0
+        ) {
+            data0[data0.length - 1] = data.values[data.values.length - 1];
+            series[11].data[series[11].data.length - 1] =
+                data.values[data.values.length - 1];
+
+            series[1].data[series[1].data.length - 1] =
+                data.squeeze[0][data.squeeze[0].length - 1];
+            series[2].data[series[2].data.length - 1] =
+                data.squeeze[3][data.squeeze[3].length - 1];
+            series[3].data[series[3].data.length - 1] =
+                data.squeeze[4][data.squeeze[4].length - 1];
+            series[4].data[series[4].data.length - 1] =
+                data.squeeze[1][data.squeeze[1].length - 1];
+            series[5].data[series[5].data.length - 1] =
+                data.squeeze[2][data.squeeze[2].length - 1];
+            series[6].data[series[6].data.length - 1] =
+                data.squeeze[5][data.squeeze[5].length - 1];
+
+            series[7].data[series[7].data.length - 1] =
+                data.flags[data.flags.length - 1];
+
+            series[8].data[series[8].data.length - 1] =
+                data.kc[0][data.kc[0].length - 1];
+            series[9].data[series[9].data.length - 1] =
+                data.kc[1][data.kc[1].length - 1];
+            series[10].data[series[10].data.length - 1] =
+                data.kc[2][data.kc[2].length - 1];
+
+            series[12].data[series[12].data.length - 1] =
+                data.mtm[data.mtm.length - 1];
+        } else if (
+            data &&
+            data.values &&
+            data.values.length === data0.length + 1
+        ) {
+            data0.push(data.values[data.values.length - 1]);
+            series[11].data.push(data.values[data.values.length - 1]);
+
+            series[1].data.push(data.squeeze[0][data.squeeze[0].length - 1]);
+            series[2].data.push(data.squeeze[3][data.squeeze[3].length - 1]);
+            series[3].data.push(data.squeeze[4][data.squeeze[4].length - 1]);
+            series[4].data.push(data.squeeze[1][data.squeeze[1].length - 1]);
+            series[5].data.push(data.squeeze[2][data.squeeze[2].length - 1]);
+            series[6].data.push(data.squeeze[5][data.squeeze[5].length - 1]);
+
+            series[7].data.push(data.flags[data.flags.length - 1]);
+
+            series[8].data.push(data.kc[0][data.kc[0].length - 1]);
+            series[9].data.push(data.kc[1][data.kc[1].length - 1]);
+            series[10].data.push(data.kc[2][data.kc[2].length - 1]);
+
+            series[12].data.push(data.mtm[data.mtm.length - 1]);
+        }
+    };
+
     const updateGraph = rtData => {
         console.log(`更新图形！%o`, rtData);
         if (dailyData) {
             let updatedData = splitData(dailyData);
-            let option = getGraphOption(updatedData);
+            updateGraphOption(currentGraphOption, updatedData);
+            //let option = getGraphOption(updatedData);
 
-            dailyChart.setOption(option, true);
+            dailyChart.setOption(currentGraphOption, false);
         }
     };
 

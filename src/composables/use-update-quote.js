@@ -10,6 +10,8 @@ export default function(props, updateGraph) {
     let endTime = "150100";
     const needUpdate = () => {
         // if (lastTime) {
+        if (quoteData.value === null) return true;
+
         let now = moment();
         let week = now.day();
         if (week === 0 || week === 6) return false;
@@ -68,7 +70,7 @@ export default function(props, updateGraph) {
     onMounted(() => {
         ipcRenderer.on("data-rtQuote-ready", rtDataReady);
         clearTimeout(timerQuoteId);
-        setTimeout(refreshQuote, 0);
+        timerQuoteId = setTimeout(refreshQuote, 0);
     });
 
     onUnmounted(() => {

@@ -21,7 +21,7 @@ export default function(store, graphElementId, props) {
         utils.checkTradeData(dailyData);
 
         let source = "close";
-        let msource = "hl";
+        let mmsource = "hl";
         console.log(`params: %o`, props.params);
         let digits = 3;
 
@@ -35,71 +35,70 @@ export default function(store, graphElementId, props) {
             mt: "MTM", // "MTM"
             mn: 12,
             mm: 1,
-            mmsource: "hl",
+            mmsource,
             digits
         });
 
         let mtmData2 = indicators.MTM.calculate(dailyData, {
-            n: 22,
+            n: 16,
             m: 5,
-            source: msource,
+            source,
             digits
         });
         let mtmData3 = indicators.MTM.calculate(dailyData, {
-            n: 60,
-            m: 20,
-            source: msource,
+            n: 21,
+            m: 10,
+            source,
             digits
         });
         // let mtmData2 = indicators.AO.calculate(dailyData, {
         //     n: 5,
         //     m: 22,
-        //     source: msource,
+        //     source: mmsource,
         //     digits
         // });
         // let mtmData3 = indicators.AO.calculate(dailyData, {
         //     n: 5,
         //     m: 35,
-        //     source: msource,
+        //     source: mmsource,
         //     digits
         // });
 
         for (let i = 0; i < dailyData.length; i++) {
             categoryData.push(dailyData[i].trade_date);
-            let up = dailyData[i].close - dailyData[i].open >= 0;
-            if (i > 0) {
-                let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
-                let c =
-                    (dailyData[i].open +
-                        dailyData[i].high +
-                        dailyData[i].low +
-                        dailyData[i].close) /
-                    4;
-                up = c >= o;
-            }
-            // if (i > 6) {
-            //     let min;
-            //     let max;
-            //     let sum = 0;
-            //     let avg = 0;
-            //     for (let j = 0; j < 6; j++) {
-            //         if (!min || min > dailyData[i - 1 - j].low)
-            //             min = dailyData[i - 1 - j].low;
-            //         if (!max || max < dailyData[i - 1 - j].high)
-            //             max = dailyData[i - 1 - j].high;
-            //         sum += dailyData[i - 1 - j].close;
-            //         avg +=
-            //             (dailyData[i - 1 - j].open +
-            //                 dailyData[i - 1 - j].high +
-            //                 dailyData[i - 1 - j].low +
-            //                 dailyData[i - 1 - j].close) /
-            //             4;
-            //     }
-            //     sum = sum / 6;
-            //     avg = avg / 6;
-            //     //up = sum >= min + (max - min) / 2;
-            //     up = avg < (min + max) / 2;
+            let up = dailyData[i].close >= dailyData[i].open;
+            // HA pattern
+            // if (i > 0) {
+            //     let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
+            //     let c =
+            //         (dailyData[i].open +
+            //             dailyData[i].high +
+            //             dailyData[i].low +
+            //             dailyData[i].close) /
+            //         4;
+            //     up = c >= o;
             // }
+            // TTM pattern
+            if (i > 6) {
+                let upTotal = !up;
+                for (let j = 0; j < 6; j++) {
+                    let c =
+                        (dailyData[i - 1 - j].open +
+                            dailyData[i - 1 - j].high +
+                            dailyData[i - 1 - j].low +
+                            dailyData[i - 1 - j].close) /
+                        4;
+                    let o =
+                        (dailyData[i - 1 - j].high + dailyData[i - 1 - j].low) /
+                        2;
+                    if ((c >= o && upTotal) || (c < o && !upTotal)) continue;
+                    else {
+                        upTotal = up;
+                        break;
+                    }
+                }
+                up = upTotal;
+            }
             values.push([
                 dailyData[i].trade_date,
                 dailyData[i].open,
@@ -278,13 +277,13 @@ export default function(store, graphElementId, props) {
                 textStyle: {
                     color: "#fff"
                 },
-                position: function(pos, params, el, elRect, size) {
-                    var obj = { top: 60 };
-                    obj[
-                        ["left", "right"][+(pos[0] < size.viewSize[0] / 2)]
-                    ] = 30;
-                    return obj;
-                },
+                // position: function(pos, params, el, elRect, size) {
+                //     var obj = { top: 60 };
+                //     obj[
+                //         ["left", "right"][+(pos[0] < size.viewSize[0] / 2)]
+                //     ] = 30;
+                //     return obj;
+                // },
                 formatter: function(params) {
                     let paramK;
                     let paramKC = [];
@@ -452,7 +451,7 @@ export default function(store, graphElementId, props) {
                 {
                     scale: true,
                     gridIndex: 1,
-                    splitNumber: 3,
+                    splitNumber: 2,
                     axisLabel: { show: true },
                     axisLine: { show: false },
                     axisTick: { show: true },
@@ -467,7 +466,7 @@ export default function(store, graphElementId, props) {
                 {
                     scale: true,
                     gridIndex: 2,
-                    splitNumber: 3,
+                    splitNumber: 2,
                     axisLabel: { show: true },
                     axisLine: { show: false },
                     axisTick: { show: true },
@@ -482,7 +481,7 @@ export default function(store, graphElementId, props) {
                 {
                     scale: true,
                     gridIndex: 3,
-                    splitNumber: 3,
+                    splitNumber: 2,
                     axisLabel: { show: true },
                     axisLine: { show: false },
                     axisTick: { show: true },

@@ -7,7 +7,7 @@ export default function(tsCode) {
     // let lastTime;
 
     let beginTime = "092500";
-    let endTime = "180100";
+    let endTime = "150100";
     const needUpdate = () => {
         // if (lastTime) {
         if (refRTData.value === null) return true;
@@ -100,6 +100,7 @@ export default function(tsCode) {
         () => tsCode.value,
         () => {
             console.log(`代码更新，重新调整计时器`);
+            refRTData.value = null;
             clearTimeout(timerQuoteId);
             timerQuoteId = setTimeout(refreshQuote, 0);
         }

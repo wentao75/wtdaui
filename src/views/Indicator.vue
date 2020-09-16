@@ -49,7 +49,7 @@ import useUpdateQuote from "../composables/use-update-quote.js";
 // @ is an alias to /src
 import DailyGraph from "@/components/DailyGraph.vue";
 import SqueezeGraph from "../components/SqueezeGraph.vue";
-import { watch } from "@vue/composition-api";
+// import { watch } from "@vue/composition-api";
 
 export default {
     name: "StockHome",
@@ -71,14 +71,14 @@ export default {
 
         const { refRTData } = useUpdateQuote(selectedTsCode);
 
-        watch(
-            () => refRTData,
-            () => {
-                console.log(`界面发现数据更新，写入数据：%o`, refRTData);
-                dailyData.value.rtData = refRTData.value;
-                // updateDaily(refRTData.value, dailyData.data);
-            }
-        );
+        // watch(
+        //     () => refRTData,
+        //     () => {
+        //         console.log(`界面发现数据更新，写入数据：%o`, refRTData);
+        //         dailyData.value.rtData = refRTData.value;
+        //         // updateDaily(refRTData.value, dailyData.data);
+        //     }
+        // );
 
         // watch(
         //     () => store.state.defaultStockCode,

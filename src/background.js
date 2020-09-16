@@ -13,6 +13,7 @@ import {
     stockDataNames
 } from "@wt/lib-wtda-query";
 
+import _ from "lodash";
 import { favorites } from "@wt/lib-stock";
 
 import xueqiu from "./data/xueqiu";
@@ -146,9 +147,9 @@ async function prepareStockList() {
         if (!favoritesData || _.isEmpty(favoritesData.favorites)) {
             await favorites.addFavorites([
                 "600036.SH",
+                "601318.SH",
                 "600276.SH",
                 "600489.SH",
-                "601318.SH",
                 "000725.SZ",
                 "000568.SZ",
                 "002352.SZ"
@@ -211,15 +212,19 @@ ipcMain.on("data-stock-read", async function(event, args) {
         // })
     } else if (args.name === "stockDaily") {
         console.log("stockDaily send: ", args);
-        let stockDailyData = await readStockData(
-            stockDataNames.daily,
-            args.tsCode
-        );
-        if (stockDailyData.data && stockDailyData.data.length > 0) {
-            stockDailyData.data = stockDailyData.data.slice(0, 500);
+        try {
+            let stockDailyData = await readStockData(
+                stockDataNames.daily,
+                args.tsCode
+            );
+            if (stockDailyData.data && stockDailyData.data.length > 0) {
+                stockDailyData.data = stockDailyData.data.slice(0, 500);
+            }
+            stockDailyData.tsCode = args.tsCode;
+            event.sender.send("data-stockDaily-ready", stockDailyData);
+        } catch (error) {
+            console.error(`未能读取stockDaily数据！ ${error}`);
         }
-        stockDailyData.tsCode = args.tsCode;
-        event.sender.send("data-stockDaily-ready", stockDailyData);
     } else if (args.name === "stockTrend") {
         log.info(`stockTrend 事件：, %o`, args);
         console.log("stockTrend 事件：%o", args);

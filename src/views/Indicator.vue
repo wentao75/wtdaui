@@ -28,11 +28,13 @@
                 v-if="activeGraph === 'daily'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
+                :rtData="refRTData"
             />
             <SqueezeGraph
                 v-if="activeGraph === 'squeeze'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
+                :rtData="refRTData"
             />
         </el-main>
     </el-container>
@@ -41,10 +43,13 @@
 <script>
 import { useStore } from "../composables/use-store.js";
 import { useSearchStock } from "../composables/use-search-stock.js";
+import useUpdateQuote from "../composables/use-update-quote.js";
+// import _ from "lodash";
 
 // @ is an alias to /src
 import DailyGraph from "@/components/DailyGraph.vue";
 import SqueezeGraph from "../components/SqueezeGraph.vue";
+import { watch } from "@vue/composition-api";
 
 export default {
     name: "StockHome",
@@ -64,11 +69,43 @@ export default {
             handleSelect
         } = useSearchStock(store, "stockDaily");
 
+        const { refRTData } = useUpdateQuote(selectedTsCode);
+
+        watch(
+            () => refRTData,
+            () => {
+                console.log(`界面发现数据更新，写入数据：%o`, refRTData);
+                dailyData.value.rtData = refRTData.value;
+                // updateDaily(refRTData.value, dailyData.data);
+            }
+        );
+
+        // watch(
+        //     () => store.state.defaultStockCode,
+        //     () => {
+        //         console.log(`设置默认股票代码`);
+        //         if (
+        //             _.isEmpty(tsCode.value) &&
+        //             _.isEmpty(selectedTsCode) &&
+        //             !_.isEmpty(store.state.defaultStockCode)
+        //         ) {
+        //             tsCode.value = store.state.defaultStockCode;
+        //         }
+        //     }
+        // );
+
+        // watchEffect(() => {
+        //     console.log(`实时数据更新，updateDaily, %o`, quoteData);
+        //     updateDaily(quoteData, dailyData);
+        // });
+
         return {
             tsCode,
             selectedTsCode,
             loading,
             dailyData,
+            refRTData,
+            // updateDaily,
             queryStockCode,
             handleSelect
         };

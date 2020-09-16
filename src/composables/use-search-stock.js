@@ -8,7 +8,8 @@ export function useSearchStock(
     dataType = "stockTrend"
     // defaultCode = "000001.SZ"
 ) {
-    let defaultCode = "000001.SZ";
+    console.log(`读取默认代码：${store.state.defaultStockCode}`);
+    let defaultCode = store.state.defaultStockCode;
     let defaultList = store.getters.queryCodes("");
     if (!_.isEmpty(defaultList) && _.isArray(defaultList)) {
         defaultCode = defaultList[0].value;
@@ -54,6 +55,11 @@ export function useSearchStock(
 
     const initRefreshGraph = () => {
         if (store.state.initDataFinished) {
+            loading.value = true;
+            if (tsCode.value === "" && selectedTsCode.value === "") {
+                tsCode.value = store.state.defaultStockCode;
+                selectedTsCode.value = store.state.defaultStockCode;
+            }
             ipcRenderer.send("data-stock-read", {
                 name: dataType,
                 tsCode: selectedTsCode.value

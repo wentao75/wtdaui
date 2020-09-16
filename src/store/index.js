@@ -7,6 +7,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     state: {
         initDataFinished: false,
+        defaultStockCode: "",
         symbolMap: null,
         stockList: null,
         indexList: null,
@@ -83,13 +84,15 @@ export default new Vuex.Store({
         },
         setFavorites(state, data) {
             state.favoriteList = data;
+        },
+        setDefaultStockCode(state, data) {
+            console.log(`设置默认代码：${data}`);
+            state.defaultStockCode = data;
         }
     },
     actions: {
         setListData({ commit }, data) {
             // 这里需要从原始的数组，准备symbol map和两个队列信息
-            commit("setInitDataFinished");
-
             if (!data) return;
             let tmpSymbolMap = new Map();
             let tmpStockMap = new Map();
@@ -143,6 +146,11 @@ export default new Vuex.Store({
             commit("setSymbols", tmpSymbolMap);
 
             commit("setFavorites", data.favorites);
+            if (data.favorites && data.favorites.length > 0) {
+                commit("setDefaultStockCode", data.favorites[0].ts_code);
+            }
+
+            commit("setInitDataFinished");
             tmpIndexMap = null;
             tmpStockMap = null;
             tmpSymbolMap = null;

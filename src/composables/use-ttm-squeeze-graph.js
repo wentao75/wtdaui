@@ -6,18 +6,19 @@ import { onMounted, onUnmounted, watch } from "@vue/composition-api";
 import echarts from "echarts";
 import _ from "lodash";
 import { indicators, utils } from "@wt/lib-stock";
+import quoteDataUtil from "./quotedata";
 
 export default function(store, graphElementId, props) {
-    let dailyData = null;
+    let stockData = null;
     let dailyChart = null;
 
-    const splitData = stockData => {
+    const splitData = rawData => {
         var categoryData = [];
         var values = [];
         // let changes = [];
         let squeezeFlags = [];
 
-        let dailyData = stockData.data; //.reverse();
+        let dailyData = rawData.data;
         utils.checkTradeData(dailyData);
 
         let source = "close";
@@ -68,37 +69,37 @@ export default function(store, graphElementId, props) {
             categoryData.push(dailyData[i].trade_date);
             let up = dailyData[i].close >= dailyData[i].open;
             // HA pattern
-            // if (i > 0) {
-            //     let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
-            //     let c =
-            //         (dailyData[i].open +
-            //             dailyData[i].high +
-            //             dailyData[i].low +
-            //             dailyData[i].close) /
-            //         4;
-            //     up = c >= o;
-            // }
-            // TTM pattern
-            if (i > 6) {
-                let upTotal = !up;
-                for (let j = 0; j < 6; j++) {
-                    let c =
-                        (dailyData[i - 1 - j].open +
-                            dailyData[i - 1 - j].high +
-                            dailyData[i - 1 - j].low +
-                            dailyData[i - 1 - j].close) /
-                        4;
-                    let o =
-                        (dailyData[i - 1 - j].high + dailyData[i - 1 - j].low) /
-                        2;
-                    if ((c >= o && upTotal) || (c < o && !upTotal)) continue;
-                    else {
-                        upTotal = up;
-                        break;
-                    }
-                }
-                up = upTotal;
+            if (i > 0) {
+                let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
+                let c =
+                    (dailyData[i].open +
+                        dailyData[i].high +
+                        dailyData[i].low +
+                        dailyData[i].close) /
+                    4;
+                up = c >= o;
             }
+            // TTM pattern
+            // if (i > 6) {
+            //     let upTotal = !up;
+            //     for (let j = 0; j < 6; j++) {
+            //         let c =
+            //             (dailyData[i - 1 - j].open +
+            //                 dailyData[i - 1 - j].high +
+            //                 dailyData[i - 1 - j].low +
+            //                 dailyData[i - 1 - j].close) /
+            //             4;
+            //         let o =
+            //             (dailyData[i - 1 - j].high + dailyData[i - 1 - j].low) /
+            //             2;
+            //         if ((c >= o && upTotal) || (c < o && !upTotal)) continue;
+            //         else {
+            //             upTotal = up;
+            //             break;
+            //         }
+            //     }
+            //     up = upTotal;
+            // }
             values.push([
                 dailyData[i].trade_date,
                 dailyData[i].open,
@@ -141,6 +142,7 @@ export default function(store, graphElementId, props) {
             stroke: up ? "#f00" : "#0f0",
             fill: up ? "#f00" : "#0f0"
         });
+        // console.log(`params: %o， api, %o`, params, api);
 
         // let hPoint;
         // let lPoint;
@@ -391,6 +393,7 @@ export default function(store, graphElementId, props) {
                     min: "dataMin",
                     max: "dataMax",
                     axisPointer: {
+                        label: { show: false },
                         z: 100
                     }
                 },
@@ -406,7 +409,12 @@ export default function(store, graphElementId, props) {
                     axisLabel: { show: false },
                     splitNumber: 20,
                     min: "dataMin",
-                    max: "dataMax"
+                    max: "dataMax",
+                    axisPointer: {
+                        label: {
+                            show: false
+                        }
+                    }
                 },
                 {
                     type: "category",
@@ -420,7 +428,12 @@ export default function(store, graphElementId, props) {
                     axisLabel: { show: false },
                     splitNumber: 20,
                     min: "dataMin",
-                    max: "dataMax"
+                    max: "dataMax",
+                    axisPointer: {
+                        label: {
+                            show: false
+                        }
+                    }
                 },
                 {
                     type: "category",
@@ -434,7 +447,12 @@ export default function(store, graphElementId, props) {
                     axisLabel: { show: false },
                     splitNumber: 20,
                     min: "dataMin",
-                    max: "dataMax"
+                    max: "dataMax",
+                    axisPointer: {
+                        label: {
+                            show: true
+                        }
+                    }
                 }
             ],
             yAxis: [
@@ -527,7 +545,9 @@ export default function(store, graphElementId, props) {
                         color: props.params.upColor,
                         color0: props.params.downColor,
                         borderColor: null,
-                        borderColor0: null
+                        borderColor0: null,
+                        lineWidth: 2,
+                        borderWidth: 2
                     }
                 },
                 {
@@ -660,7 +680,7 @@ export default function(store, graphElementId, props) {
                     ],
                     show: false,
                     seriesIndex: 6,
-                    dimensions: 6
+                    dimensions: 2
                 }
                 // {
                 //     type: "piecewise",
@@ -700,15 +720,15 @@ export default function(store, graphElementId, props) {
             console.log(`数据为空，不继续处理...`);
             return;
         }
-        dailyData = rawData;
+        stockData = rawData;
+        let dailyData = stockData && stockData.data;
         console.log(
-            `日线数据长度：${dailyData &&
-                dailyData.data &&
-                dailyData.data.length}, ${rawData && rawData.tsCode}, %o`,
+            `日线数据长度：${dailyData && dailyData.length}, ${rawData &&
+                rawData.tsCode}, %o`,
             rawData && rawData.info
         );
 
-        let data = splitData(dailyData);
+        let data = splitData(stockData);
         let option = getGraphOption(data);
 
         dailyChart.setOption(option, true);
@@ -720,15 +740,49 @@ export default function(store, graphElementId, props) {
         console.log("trend 数据设置完毕！");
     };
 
-    const updateGraph = rtData => {
-        console.log(`更新图形！%o`, rtData);
-        if (dailyData) {
-            let updatedData = splitData(dailyData);
-            let option = getGraphOption(updatedData);
+    const updateGraphOption = (option, data) => {
+        let series = option.series;
+        let xAxis = option.xAxis;
 
-            dailyChart.setOption(option, false);
+        series[0].data = data && data.values;
+        series[1].data = data && data.squeeze && data.squeeze[0];
+        series[2].data = data && data.squeeze && data.squeeze[3];
+        series[3].data = data && data.squeeze && data.squeeze[4];
+        series[4].data = data && data.squeeze && data.squeeze[1];
+        series[5].data = data && data.squeeze && data.squeeze[2];
+        series[6].data = data && data.squeeze && data.squeeze[5];
+        series[7].data = data && data.flags;
+        series[8].data = data && data.mtm2;
+        series[9].data = data && data.mtm3;
+
+        xAxis[0].data = data && data.categoryData;
+        xAxis[1].data = data && data.categoryData;
+        xAxis[2].data = data && data.categoryData;
+        xAxis[3].data = data && data.categoryData;
+    };
+
+    const updateGraph = rawData => {
+        console.log(`更新图形！`);
+        if (rawData) {
+            stockData = rawData;
+            let updatedData = splitData(stockData);
+            let currentGraphOption = dailyChart.getOption();
+            updateGraphOption(currentGraphOption, updatedData);
+            //let option = getGraphOption(updatedData);
+
+            dailyChart.setOption(currentGraphOption, false);
         }
     };
+
+    // const updateGraph = rtData => {
+    //     console.log(`更新图形！%o`, rtData);
+    //     if (stockData) {
+    //         let updatedData = splitData(dailyData);
+    //         let option = getGraphOption(updatedData);
+
+    //         dailyChart.setOption(option, false);
+    //     }
+    // };
 
     onMounted(() => {
         console.log("ttm squeeze onMounted");
@@ -749,6 +803,31 @@ export default function(store, graphElementId, props) {
         data => {
             console.log("数据变化，开始TTM Squeeze Graph处理...");
             dataReady(data);
+        }
+    );
+
+    watch(
+        () => props.rtData,
+        rt => {
+            if (stockData && stockData.data && stockData.data.length > 0) {
+                console.log(
+                    `实时数据在sequeeze-graph中侦测到变化，合并更新 ${stockData &&
+                        stockData.data &&
+                        stockData.data.length}, [%o]`,
+
+                    rt
+                );
+                quoteDataUtil.updateDaily(rt, stockData);
+                updateGraph(stockData);
+                console.log(
+                    `sequeeze-graph合并后数据：${stockData &&
+                        stockData.data &&
+                        stockData.data.length} %o`,
+                    stockData &&
+                        stockData.data &&
+                        stockData.data[stockData.data.length - 1]
+                );
+            }
         }
     );
 

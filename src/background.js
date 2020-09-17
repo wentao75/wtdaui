@@ -160,22 +160,22 @@ async function prepareStockList() {
                 favoritesData.favorites &&
                 favoritesData.favorites.length}`
         );
-        let favList = [];
-        for (let code of favoritesData.favorites) {
-            for (let stock of stockListData.data) {
-                if (code.match(stock.ts_code)) {
-                    favList.push({
-                        value: code,
-                        ts_code: code,
-                        name: stock.name
-                    });
-                }
-            }
-        }
+        // let favList = [];
+        // for (let code of favoritesData.favorites) {
+        //     for (let stock of stockListData.data) {
+        //         if (code.match(stock.ts_code)) {
+        //             favList.push({
+        //                 value: code,
+        //                 ts_code: code,
+        //                 name: stock.name
+        //             });
+        //         }
+        //     }
+        // }
         return {
             stock: stockListData.data,
             index: indexListData.data,
-            favorites: favList
+            favorites: favoritesData.favorites // favList
         };
     } catch (error) {
         log.error(`读取股票/指数列表时发生异常：${error}`);
@@ -218,12 +218,13 @@ ipcMain.on("data-stock-read", async function(event, args) {
                 args.tsCode
             );
             if (stockDailyData.data && stockDailyData.data.length > 0) {
-                stockDailyData.data = stockDailyData.data.slice(0, 500);
+                stockDailyData.data = stockDailyData.data.slice(0, 1000);
             }
             stockDailyData.tsCode = args.tsCode;
             event.sender.send("data-stockDaily-ready", stockDailyData);
         } catch (error) {
             console.error(`未能读取stockDaily数据！ ${error}`);
+            event.sender.send("data-stockDaily-ready");
         }
     } else if (args.name === "stockTrend") {
         log.info(`stockTrend 事件：, %o`, args);
@@ -247,5 +248,13 @@ ipcMain.on("data-stock-read", async function(event, args) {
         } catch (error) {
             console.error(`读取实时数据错误: %o`, error);
         }
+    } else if (args.name === "addFavorites") {
+        log.info(`addFavorites 事件：, %o`, args);
+        let favData = await favorites.addFavorites(args.data);
+        event.sender.send("favorites-ready", favData && favData.favorites);
+    } else if (args.name === "removeFavorites") {
+        log.info(`removeFavorites 事件：, %o`, args);
+        let favData = await favorites.removeFavorites(args.data);
+        event.sender.send("favorites-ready", favData && favData.favorites);
     }
 });

@@ -42,48 +42,9 @@ export default function(tsCode) {
         console.log(`接收实时数据：%o`, data);
         // 已经接收到最新数据，更新并添加到数据中，然后更新图示
 
-        // let dailyData = props.data;
-        // if (dailyData && dailyData.data && dailyData.data.length > 0 && data) {
-        //     let lastData = dailyData.data[dailyData.data.length - 1];
-        //     console.log(
-        //         `比较更新数据[${dailyData.data.length}]：${lastData.trade_date} ${data.trade_date}`
-        //     );
-        //     if (lastData.trade_date === data.trade_date) {
-        //         dailyData.data[dailyData.length - 1] = data;
-        //     } else if (lastData.trade_date < data.trade_date) {
-        //         data.adj_factor = lastData.adj_factor;
-        //         dailyData.data.push(data);
-        //     } else {
-        //         return;
-        //     }
-
-        //     updateGraph(data);
         refRTData.value = data;
         console.log(`实时数据更新完毕（可以检查是否有响应！！）！%o`, data);
-
-        // }
     };
-
-    // const updateDaily = (rt, daily) => {
-    //     if (daily && daily.length > 0 && rt) {
-    //         let lastData = daily[daily.length - 1];
-    //         console.log(
-    //             `比较更新数据[${daily.length}]：${lastData.trade_date} ${rt.trade_date}`
-    //         );
-    //         if (lastData.trade_date === rt.trade_date) {
-    //             daily[daily.length - 1] = rt;
-    //         } else if (lastData.trade_date < rt.trade_date) {
-    //             rt.adj_factor = lastData.adj_factor;
-    //             daily.push(rt);
-    //         }
-    //         daily.rtData = rt;
-    //     }
-    //     return daily;
-    // };
-
-    // const updateDailyData = (dailyData, rtData) => {
-
-    // }
 
     onMounted(() => {
         ipcRenderer.on("data-rtQuote-ready", rtDataReady);

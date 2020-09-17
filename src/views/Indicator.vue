@@ -1,6 +1,24 @@
 <template>
     <el-container>
         <el-header>
+            <el-button-group>
+                <el-button
+                    v-if="$store.getters.isFavorite(selectedTsCode)"
+                    type="info"
+                    icon="el-icon-star-off"
+                    size="small"
+                    @click="removeFavorite"
+                    circle
+                ></el-button>
+                <el-button
+                    v-if="!$store.getters.isFavorite(selectedTsCode)"
+                    type="success"
+                    icon="el-icon-star-off"
+                    size="small"
+                    @click="addFavorite"
+                    circle
+                ></el-button>
+            </el-button-group>
             <el-autocomplete
                 popper-class="my-autocomplete"
                 placeholder="请输入股票代码"
@@ -14,24 +32,26 @@
                     ><span class="stockname">{{ item.name }}</span>
                 </template>
             </el-autocomplete>
+
             <el-radio-group v-model="activeGraph">
-                <el-radio-button label="daily" value="daily"
-                    >日常</el-radio-button
-                >
                 <el-radio-button label="squeeze" value="squeeze"
                     >鸡排</el-radio-button
                 >
+                <el-radio-button label="daily" value="daily"
+                    >日常</el-radio-button
+                >
             </el-radio-group>
         </el-header>
+
         <el-main v-loading="loading || !$store.state.initDataFinished">
-            <DailyGraph
-                v-if="activeGraph === 'daily'"
+            <SqueezeGraph
+                v-if="activeGraph === 'squeeze'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
                 :rtData="refRTData"
             />
-            <SqueezeGraph
-                v-if="activeGraph === 'squeeze'"
+            <DailyGraph
+                v-if="activeGraph === 'daily'"
                 :tsCode="selectedTsCode"
                 :data="dailyData"
                 :rtData="refRTData"
@@ -44,6 +64,7 @@
 import { useStore } from "../composables/use-store.js";
 import { useSearchStock } from "../composables/use-search-stock.js";
 import useUpdateQuote from "../composables/use-update-quote.js";
+import useFavorites from "../composables/use-favorites.js";
 // import _ from "lodash";
 
 // @ is an alias to /src
@@ -55,7 +76,7 @@ export default {
     name: "StockHome",
     data() {
         return {
-            activeGraph: "daily"
+            activeGraph: "squeeze"
         };
     },
     setup() {
@@ -71,33 +92,10 @@ export default {
 
         const { refRTData } = useUpdateQuote(selectedTsCode);
 
-        // watch(
-        //     () => refRTData,
-        //     () => {
-        //         console.log(`界面发现数据更新，写入数据：%o`, refRTData);
-        //         dailyData.value.rtData = refRTData.value;
-        //         // updateDaily(refRTData.value, dailyData.data);
-        //     }
-        // );
-
-        // watch(
-        //     () => store.state.defaultStockCode,
-        //     () => {
-        //         console.log(`设置默认股票代码`);
-        //         if (
-        //             _.isEmpty(tsCode.value) &&
-        //             _.isEmpty(selectedTsCode) &&
-        //             !_.isEmpty(store.state.defaultStockCode)
-        //         ) {
-        //             tsCode.value = store.state.defaultStockCode;
-        //         }
-        //     }
-        // );
-
-        // watchEffect(() => {
-        //     console.log(`实时数据更新，updateDaily, %o`, quoteData);
-        //     updateDaily(quoteData, dailyData);
-        // });
+        const { addFavorite, removeFavorite } = useFavorites(
+            store,
+            selectedTsCode
+        );
 
         return {
             tsCode,
@@ -107,7 +105,10 @@ export default {
             refRTData,
             // updateDaily,
             queryStockCode,
-            handleSelect
+            handleSelect,
+
+            addFavorite,
+            removeFavorite
         };
     },
 
@@ -119,6 +120,10 @@ export default {
 </script>
 
 <style>
+.el-autocomplete {
+    margin: 10px 10px 10px 2px;
+}
+
 .my-autocomplete {
     margin: 12px;
 }

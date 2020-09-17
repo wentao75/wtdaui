@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import _ from "lodash";
+import { ipcRenderer } from "electron";
 
 Vue.use(Vuex);
 
@@ -14,6 +15,13 @@ export default new Vuex.Store({
         favoriteList: null
     },
     getters: {
+        isFavorite: state => symbol => {
+            if (_.isEmpty(symbol) && symbol.length !== 9) return false;
+            for (let fav of state.favoriteList) {
+                if (fav.ts_code === symbol) return true;
+            }
+            return false;
+        },
         queryCodeBySymbol: state => symbol => {
             if (_.isEmpty(symbol) && symbol.length !== 6) return [];
             return state.symbolMap.get(symbol);
@@ -145,15 +153,56 @@ export default new Vuex.Store({
             commit("setIndexList", tmpIndexMap);
             commit("setSymbols", tmpSymbolMap);
 
-            commit("setFavorites", data.favorites);
-            if (data.favorites && data.favorites.length > 0) {
-                commit("setDefaultStockCode", data.favorites[0].ts_code);
+            let favList = [];
+            if (data && data.favorites) {
+                for (let code of data.favorites) {
+                    let stock = tmpStockMap.get(code);
+                    if (stock) {
+                        favList.push({
+                            value: code,
+                            ts_code: code,
+                            name: stock.name
+                        });
+                    }
+                }
+            }
+            commit("setFavorites", favList);
+            if (favList && favList.length > 0) {
+                commit("setDefaultStockCode", favList[0].ts_code);
             }
 
             commit("setInitDataFinished");
             tmpIndexMap = null;
             tmpStockMap = null;
             tmpSymbolMap = null;
+        },
+        setFavorites({ commit, state }, favorites) {
+            let favList = [];
+            if (favorites) {
+                for (let code of favorites) {
+                    let stock = state.stockList.get(code);
+                    if (stock) {
+                        favList.push({
+                            value: code,
+                            ts_code: code,
+                            name: stock.name
+                        });
+                    }
+                }
+            }
+            commit("setFavorites", favList);
+        },
+        addFavorite(context, tsCode) {
+            ipcRenderer.send("data-stock-read", {
+                name: "addFavorites",
+                data: tsCode
+            });
+        },
+        removeFavorite(context, tsCode) {
+            ipcRenderer.send("data-stock-read", {
+                name: "removeFavorites",
+                data: tsCode
+            });
         }
     },
     modules: {}

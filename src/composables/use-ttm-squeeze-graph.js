@@ -14,44 +14,61 @@ export default function(store, graphElementId, props) {
 
     const splitData = rawData => {
         var categoryData = [];
+        // K 线
         var values = [];
         // let changes = [];
         let squeezeFlags = [];
+        let waves = [];
 
         let dailyData = rawData.data;
         utils.checkTradeData(dailyData);
 
         let source = "close";
-        let mmsource = "hl";
+        // let mmsource = "hl";
         console.log(`params: %o`, props.params);
         let digits = 3;
 
         // 基础的Squeeze数据
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
             source,
-            ma: "ma",
+            ma: "ema",
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,
-            mt: "MTM", // "MTM"
+            mt: "WAVE", // "MTM"
             mn: 12,
             mm: 1,
-            mmsource,
+            tn: 5,
+            tm: 21,
+            tl: 34,
             digits
         });
 
-        let mtmData2 = indicators.MTM.calculate(dailyData, {
-            n: 16,
-            m: 5,
+        // [hist1, hist2, hist3, hist4, hist5, hist6, macd6]
+        let ttmwaveData = indicators.TTMWave.calculate(dailyData, {
             source,
+            n: 5,
+            ma: 21,
+            la: 34,
+            mb: 55,
+            lb: 89,
+            mc: 144,
+            lc: 233,
             digits
         });
-        let mtmData3 = indicators.MTM.calculate(dailyData, {
-            n: 21,
-            m: 10,
-            source,
-            digits
-        });
+
+        // let mtmData2 = indicators.MTM.calculate(dailyData, {
+        //     n: 16,
+        //     m: 5,
+        //     source,
+        //     digits
+        // });
+        // let mtmData3 = indicators.MTM.calculate(dailyData, {
+        //     n: 21,
+        //     m: 10,
+        //     source,
+        //     digits
+        // });
         // let mtmData2 = indicators.AO.calculate(dailyData, {
         //     n: 5,
         //     m: 22,
@@ -77,7 +94,13 @@ export default function(store, graphElementId, props) {
                         dailyData[i].low +
                         dailyData[i].close) /
                     4;
-                up = c >= o;
+                //up = c >= o;
+                // 1/0表示正常升降，3/2表示修改升降
+                if (up) {
+                    up = c >= o ? 1 : 2;
+                } else {
+                    up = c >= o ? 3 : 0;
+                }
             }
             // TTM pattern
             // if (i > 6) {
@@ -115,15 +138,21 @@ export default function(store, graphElementId, props) {
                 //squeezeFlags[i] = "--";
             }
 
-            squeezeData[5][i] = [i, squeezeData[5][i], squeezeData[6][i]];
+            waves.push([i, squeezeData[7][i], squeezeData[6][i]]);
+            // squeezeData[5][i] = [
+            //     i,
+            //     squeezeData[5][i], // mtm
+            //     squeezeData[6][i], // state
+            //     squeezeData[7][i] // wave
+            // ];
         }
 
         return {
             categoryData: categoryData,
             values: values,
-            mtm2: mtmData2,
-            mtm3: mtmData3,
+            ttmwave: ttmwaveData,
             squeeze: squeezeData,
+            waves,
             flags: squeezeFlags,
             info: stockData.info
         };
@@ -139,8 +168,22 @@ export default function(store, graphElementId, props) {
 
         let halfWidth = api.size([1, 0])[0] * 0.25;
         let style = api.style({
-            stroke: up ? "#f00" : "#0f0",
-            fill: up ? "#f00" : "#0f0"
+            stroke:
+                up === 1
+                    ? "#f00"
+                    : up === 0
+                    ? "#0f0"
+                    : up === 2
+                    ? "#0ff"
+                    : "#f99",
+            fill:
+                up === 1
+                    ? "#f00"
+                    : up === 0
+                    ? "#0f0"
+                    : up === 2
+                    ? "#0ff"
+                    : "#f99"
         });
         // console.log(`params: %o， api, %o`, params, api);
 
@@ -264,7 +307,10 @@ export default function(store, graphElementId, props) {
                     "挤牌-B上",
                     "挤牌-B下",
                     "挤牌-K上",
-                    "挤牌-K下"
+                    "挤牌-K下",
+                    "WaveA",
+                    "WaveB",
+                    "WaveC"
                 ]
             },
             tooltip: {
@@ -279,20 +325,20 @@ export default function(store, graphElementId, props) {
                 textStyle: {
                     color: "#fff"
                 },
-                // position: function(pos, params, el, elRect, size) {
-                //     var obj = { top: 60 };
-                //     obj[
-                //         ["left", "right"][+(pos[0] < size.viewSize[0] / 2)]
-                //     ] = 30;
-                //     return obj;
-                // },
+                position: function(pos, params, el, elRect, size) {
+                    var obj = { top: "5%" };
+                    obj[["left", "right"][+(pos[0] < size.viewSize[0] / 2)]] =
+                        "5%";
+                    return obj;
+                },
                 formatter: function(params) {
                     let paramK;
                     let paramKC = [];
                     let paramBOLL = [];
                     let paramMTM;
-                    let paramMTM2;
-                    let paramMTM3;
+                    let paramWavea;
+                    let paramWaveb;
+                    let paramWavec;
                     params.forEach(param => {
                         if (param.seriesIndex >= 1 && param.seriesIndex <= 3) {
                             paramKC[param.seriesIndex - 1] = param;
@@ -306,9 +352,11 @@ export default function(store, graphElementId, props) {
                         } else if (param.seriesIndex === 6) {
                             paramMTM = param;
                         } else if (param.seriesIndex === 8) {
-                            paramMTM2 = param;
+                            paramWavea = param;
                         } else if (param.seriesIndex === 9) {
-                            paramMTM3 = param;
+                            paramWaveb = param;
+                        } else if (param.seriesIndex === 10) {
+                            paramWavec = param;
                         }
                     });
 
@@ -317,7 +365,7 @@ export default function(store, graphElementId, props) {
                         "均值: " +
                             (paramKC && paramKC[0] && paramKC[0].data) +
                             " [" +
-                            (paramMTM && paramMTM.data && paramMTM.data[2]) +
+                            (paramWavea && paramWavea.data[2]) +
                             "] <br/>",
                         "开: " +
                             (paramK && paramK.data && paramK.data[1]) +
@@ -340,11 +388,13 @@ export default function(store, graphElementId, props) {
                             (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
                             "] <br/>",
                         "MTM: [" +
-                            (paramMTM && paramMTM.data && paramMTM.data[1]) +
+                            (paramMTM && paramMTM.data) +
+                            ", [" +
+                            (paramWavea && paramWavea.data[1]) +
                             ", " +
-                            (paramMTM2 && paramMTM2.data) +
+                            (paramWaveb && paramWaveb.data) +
                             ", " +
-                            (paramMTM3 && paramMTM3.data) +
+                            (paramWavec && paramWavec.data) +
                             "] <br/>"
                     ].join("");
                 }
@@ -366,19 +416,25 @@ export default function(store, graphElementId, props) {
                     left: "5%",
                     right: "5%",
                     top: "51%", //"73%",
-                    height: "13%"
+                    height: "10%"
                 },
                 {
                     left: "5%",
                     right: "5%",
-                    top: "65%",
-                    height: "13%"
+                    top: "62%",
+                    height: "9%"
                 },
                 {
                     left: "5%",
                     right: "5%",
-                    top: "80%",
-                    height: "13%"
+                    top: "73%",
+                    height: "9%"
+                },
+                {
+                    left: "5%",
+                    right: "5%",
+                    top: "84%",
+                    height: "9%"
                 }
             ],
             xAxis: [
@@ -389,7 +445,7 @@ export default function(store, graphElementId, props) {
                     boundaryGap: false,
                     axisLine: { onZero: false },
                     splitLine: { show: false },
-                    splitNumber: 20,
+                    // splitNumber: 20,
                     min: "dataMin",
                     max: "dataMax",
                     axisPointer: {
@@ -407,7 +463,7 @@ export default function(store, graphElementId, props) {
                     axisTick: { show: false },
                     splitLine: { show: false },
                     axisLabel: { show: false },
-                    splitNumber: 20,
+                    // splitNumber: 20,
                     min: "dataMin",
                     max: "dataMax",
                     axisPointer: {
@@ -426,7 +482,7 @@ export default function(store, graphElementId, props) {
                     axisTick: { show: false },
                     splitLine: { show: false },
                     axisLabel: { show: false },
-                    splitNumber: 20,
+                    // splitNumber: 20,
                     min: "dataMin",
                     max: "dataMax",
                     axisPointer: {
@@ -445,7 +501,26 @@ export default function(store, graphElementId, props) {
                     axisTick: { show: false },
                     splitLine: { show: false },
                     axisLabel: { show: false },
-                    splitNumber: 20,
+                    // splitNumber: 20,
+                    min: "dataMin",
+                    max: "dataMax",
+                    axisPointer: {
+                        label: {
+                            show: false
+                        }
+                    }
+                },
+                {
+                    type: "category",
+                    gridIndex: 4,
+                    data: data.categoryData,
+                    scale: true,
+                    boundaryGap: false,
+                    axisLine: { onZero: false },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    // splitNumber: 20,
                     min: "dataMin",
                     max: "dataMax",
                     axisPointer: {
@@ -510,18 +585,33 @@ export default function(store, graphElementId, props) {
                             type: "dashed"
                         }
                     }
+                },
+                {
+                    scale: true,
+                    gridIndex: 4,
+                    splitNumber: 2,
+                    axisLabel: { show: true },
+                    axisLine: { show: false },
+                    axisTick: { show: true },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color: "#777",
+                            type: "dashed"
+                        }
+                    }
                 }
             ],
             dataZoom: [
                 {
                     type: "inside",
-                    xAxisIndex: [0, 1, 2, 3],
+                    xAxisIndex: [0, 1, 2, 3, 4],
                     start: start,
                     end: 100
                 },
                 {
                     show: true,
-                    xAxisIndex: [0, 1, 2, 3],
+                    xAxisIndex: [0, 1, 2, 3, 4],
                     type: "slider",
                     top: "96%",
                     start: start,
@@ -623,8 +713,11 @@ export default function(store, graphElementId, props) {
                     symbol: "none",
                     symbolSize: 3,
                     // smooth: true,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    itemStyle: {
+                        color: "#FA8072"
+                    }
                 },
                 {
                     // 7
@@ -642,9 +735,20 @@ export default function(store, graphElementId, props) {
                 },
                 {
                     // 8
-                    name: "挤牌-能量 B",
+                    name: "WaveA",
                     type: "bar", //"line",
-                    data: data && data.mtm2,
+                    data: data && data.waves, //ttmwave[0],
+                    symbol: "none",
+                    symbolSize: 3,
+                    // smooth: true,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1
+                },
+                {
+                    // 9
+                    name: "WaveB",
+                    type: "bar", //"line",
+                    data: data && data.ttmwave[2],
                     symbol: "none",
                     symbolSize: 3,
                     // smooth: true,
@@ -652,10 +756,10 @@ export default function(store, graphElementId, props) {
                     yAxisIndex: 2
                 },
                 {
-                    // 9
-                    name: "挤牌-能量 C",
+                    // 10
+                    name: "WaveC",
                     type: "bar", //"line",
-                    data: data && data.mtm3,
+                    data: data && data.ttmwave[4],
                     symbol: "none",
                     symbolSize: 3,
                     // smooth: true,
@@ -679,25 +783,57 @@ export default function(store, graphElementId, props) {
                         { value: indicators.SQUEEZE.states.SELL, color: "#0F0" }
                     ],
                     show: false,
-                    seriesIndex: 6,
+                    seriesIndex: 8,
                     dimensions: 2
+                },
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            gte: 0,
+                            color: "#FF3030"
+                        },
+                        {
+                            lt: 0,
+                            color: "#0abab5"
+                        }
+                    ],
+                    show: false,
+                    seriesIndex: 6,
+                    dimensions: 0
+                },
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            gte: 0,
+                            color: "#FF3030"
+                        },
+                        {
+                            lt: 0,
+                            color: "#0abab5"
+                        }
+                    ],
+                    show: false,
+                    seriesIndex: 9,
+                    dimensions: 0
+                },
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            gte: 0,
+                            color: "#FF3030"
+                        },
+                        {
+                            lt: 0,
+                            color: "#0abab5"
+                        }
+                    ],
+                    show: false,
+                    seriesIndex: 10,
+                    dimensions: 0
                 }
-                // {
-                //     type: "piecewise",
-                //     pieces: [
-                //         {
-                //             gte: 0,
-                //             color: "#f00"
-                //         },
-                //         {
-                //             lt: 0,
-                //             color: "#0f0"
-                //         }
-                //     ],
-                //     show: false,
-                //     seriesIndex: 0,
-                //     dimensions: 4
-                // }
             ]
         };
     };
@@ -752,13 +888,15 @@ export default function(store, graphElementId, props) {
         series[5].data = data && data.squeeze && data.squeeze[2];
         series[6].data = data && data.squeeze && data.squeeze[5];
         series[7].data = data && data.flags;
-        series[8].data = data && data.mtm2;
-        series[9].data = data && data.mtm3;
+        series[8].data = data && data.waves; //ttmwave[1];
+        series[9].data = data && data.ttmwave[2];
+        series[10].data = data && data.ttmwave[4];
 
         xAxis[0].data = data && data.categoryData;
         xAxis[1].data = data && data.categoryData;
         xAxis[2].data = data && data.categoryData;
         xAxis[3].data = data && data.categoryData;
+        xAxis[4].data = data && data.categoryData;
     };
 
     const updateGraph = rawData => {

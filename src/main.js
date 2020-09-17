@@ -37,6 +37,11 @@ ipcRenderer.on("init-stockList-ready", (event, data) => {
     store.dispatch("setListData", data);
 });
 
+ipcRenderer.on("favorites-ready", (event, data) => {
+    // 接收处理完成的自选股数据
+    store.dispatch("setFavorites", data);
+});
+
 new Vue({
     router,
     store,

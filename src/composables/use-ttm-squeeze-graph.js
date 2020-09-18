@@ -57,6 +57,9 @@ export default function(store, graphElementId, props) {
             digits
         });
 
+        let scalper = indicators.Scalper.calculate(dailyData);
+        // console.log(`scalper: %o`, scalper);
+
         // let mtmData2 = indicators.MTM.calculate(dailyData, {
         //     n: 16,
         //     m: 5,
@@ -129,7 +132,8 @@ export default function(store, graphElementId, props) {
                 dailyData[i].close,
                 dailyData[i].low,
                 dailyData[i].high,
-                up
+                up,
+                scalper[i][1]
             ]);
 
             if (squeezeData[6][i] === indicators.SQUEEZE.states.READY) {
@@ -153,6 +157,7 @@ export default function(store, graphElementId, props) {
             ttmwave: ttmwaveData,
             squeeze: squeezeData,
             waves,
+            scalper,
             flags: squeezeFlags,
             info: stockData.info
         };
@@ -165,26 +170,75 @@ export default function(store, graphElementId, props) {
         let lowPoint = api.coord([xValue, api.value(3)]);
         let highPoint = api.coord([xValue, api.value(4)]);
         let up = api.value(5);
+        let scalper = api.value(6);
 
         let halfWidth = api.size([1, 0])[0] * 0.25;
+        let color =
+            up === 1 ? "#f00" : up === 0 ? "#0f0" : up === 2 ? "#0ff" : "#f99";
+        // if (
+        //     scalper === indicators.Scalper.states.BUY_READY ||
+        //     scalper === indicators.Scalper.states.SELL_READY
+        // ) {
+        //     console.log(`有标记：${xValue}, ${scalper}`);
+        //     color = "#fff";
+        // }
         let style = api.style({
-            stroke:
-                up === 1
-                    ? "#f00"
-                    : up === 0
-                    ? "#0f0"
-                    : up === 2
-                    ? "#0ff"
-                    : "#f99",
-            fill:
-                up === 1
-                    ? "#f00"
-                    : up === 0
-                    ? "#0f0"
-                    : up === 2
-                    ? "#0ff"
-                    : "#f99"
+            stroke: color,
+            fill: color
         });
+
+        let flagHalfWidth = api.size([1, 0])[0] * 0.3;
+        let flagHeight = 2 * flagHalfWidth * 0.87;
+        // let flagChild;
+        let invisibleUp = true;
+        let invisibleDown = true;
+        if (scalper === indicators.Scalper.states.BUY_READY) {
+            // 画一个向上的红色三角形
+            invisibleUp = false;
+            // flagChild = {
+            //     type: "polyline",
+            //     shape: {
+            //         points: [
+            //             [lowPoint[0], lowPoint[1] + 8],
+            //             [
+            //                 lowPoint[0] - flagHalfWidth,
+            //                 lowPoint[1] + 8 + flagHeight
+            //             ],
+            //             [
+            //                 lowPoint[0] + flagHalfWidth,
+            //                 lowPoint[1] + 8 + flagHeight
+            //             ]
+            //         ]
+            //     },
+            //     style: api.style({
+            //         stroke: "#F00",
+            //         fill: "#F00"
+            //     })
+            // };
+        } else if (scalper === indicators.Scalper.states.SELL_READY) {
+            // 画一个向下的绿色三角形
+            invisibleDown = false;
+            // flagChild = {
+            //     type: "polyline",
+            //     shape: {
+            //         points: [
+            //             [highPoint[0], highPoint[1] - 8],
+            //             [
+            //                 highPoint[0] - flagHalfWidth,
+            //                 highPoint[1] - 8 - flagHeight
+            //             ],
+            //             [
+            //                 highPoint[0] + flagHalfWidth,
+            //                 highPoint[1] - 8 - flagHeight
+            //             ]
+            //         ]
+            //     },
+            //     style: api.style({
+            //         stroke: "#0F0",
+            //         fill: "#0F0"
+            //     })
+            // };
+        }
         // console.log(`params: %o， api, %o`, params, api);
 
         // let hPoint;
@@ -196,7 +250,7 @@ export default function(store, graphElementId, props) {
         //     hPoint = closePoint;
         //     lPoint = openPoint;
         // }
-        return {
+        let item = {
             type: "group",
             children: [
                 {
@@ -228,6 +282,48 @@ export default function(store, graphElementId, props) {
                         y2: closePoint[1]
                     },
                     style: style
+                },
+                {
+                    type: "polyline",
+                    invisible: invisibleUp,
+                    shape: {
+                        points: [
+                            [lowPoint[0], lowPoint[1] + 8],
+                            [
+                                lowPoint[0] - flagHalfWidth,
+                                lowPoint[1] + 8 + flagHeight
+                            ],
+                            [
+                                lowPoint[0] + flagHalfWidth,
+                                lowPoint[1] + 8 + flagHeight
+                            ]
+                        ]
+                    },
+                    style: api.style({
+                        stroke: "#F00",
+                        fill: "#F00"
+                    })
+                },
+                {
+                    type: "polyline",
+                    invisible: invisibleDown,
+                    shape: {
+                        points: [
+                            [highPoint[0], highPoint[1] - 8],
+                            [
+                                highPoint[0] - flagHalfWidth,
+                                highPoint[1] - 8 - flagHeight
+                            ],
+                            [
+                                highPoint[0] + flagHalfWidth,
+                                highPoint[1] - 8 - flagHeight
+                            ]
+                        ]
+                    },
+                    style: api.style({
+                        stroke: "#0F0",
+                        fill: "#0F0"
+                    })
                 }
             ]
             //     children: [
@@ -263,6 +359,10 @@ export default function(store, graphElementId, props) {
             //     }
             // ]
         };
+        // if (flagChild) {
+        //     item.children.push(flagChild);
+        // }
+        return item;
     };
 
     const getGraphOption = data => {

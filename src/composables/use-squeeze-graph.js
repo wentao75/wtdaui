@@ -35,7 +35,7 @@ export default function(store, graphElementId, props) {
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,
-            mt: "WAVE", // "MTM"
+            mt: "MTM", // "MTM"
             mn: 12,
             mm: 1,
             tn: 5,
@@ -112,7 +112,7 @@ export default function(store, graphElementId, props) {
                 //squeezeFlags[i] = "--";
             }
 
-            squeezeData[5][i] = [i, squeezeData[7][i], squeezeData[6][i]];
+            squeezeData[5][i] = [i, squeezeData[5][i], squeezeData[6][i]];
         }
 
         return {
@@ -325,9 +325,9 @@ export default function(store, graphElementId, props) {
                             (paramK && paramK.data && paramK.data[2]) +
                             "<br/>",
                         "高: " +
-                            (paramK && paramK.data && paramK.data[3]) +
-                            ", 低: " +
                             (paramK && paramK.data && paramK.data[4]) +
+                            ", 低: " +
+                            (paramK && paramK.data && paramK.data[3]) +
                             "<br/>",
                         "KC: [" +
                             (paramKC && paramKC[1] && paramKC[1].data) +
@@ -636,8 +636,8 @@ export default function(store, graphElementId, props) {
                     symbol: "none",
                     symbolSize: 3,
                     // smooth: true,
-                    xAxisIndex: 3,
-                    yAxisIndex: 3
+                    xAxisIndex: 2,
+                    yAxisIndex: 2
                 },
                 {
                     // 7
@@ -650,8 +650,8 @@ export default function(store, graphElementId, props) {
                         borderType: "solid",
                         opacity: 1
                     },
-                    xAxisIndex: 3,
-                    yAxisIndex: 3
+                    xAxisIndex: 2,
+                    yAxisIndex: 2
                 },
                 {
                     // 8
@@ -710,12 +710,31 @@ export default function(store, graphElementId, props) {
                     // 12
                     name: "MTM",
                     type: "bar", //"line",
-                    data: data && data.mtm,
+                    data: data && data.squeeze && data.squeeze[9],
                     symbol: "none",
                     symbolSize: 3,
+                    barGap: "-100%",
                     // smooth: true,
-                    xAxisIndex: 2,
-                    yAxisIndex: 2
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    itemStyle: {
+                        color: "#FFA500"
+                    }
+                },
+                {
+                    // 13
+                    name: "MTM",
+                    type: "bar", //"line",
+                    data: data && data.squeeze && data.squeeze[8],
+                    symbol: "none",
+                    symbolSize: 3,
+                    barGap: "-100%",
+                    // smooth: true,
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    itemStyle: {
+                        color: "#FF4500"
+                    }
                 }
             ],
             visualMap: [
@@ -736,24 +755,24 @@ export default function(store, graphElementId, props) {
                     show: false,
                     seriesIndex: 6,
                     dimensions: 2
-                },
-                {
-                    type: "piecewise",
-                    pieces: [
-                        {
-                            gte: 0,
-                            color: "#F00",
-                            opacity: 0.5
-                        },
-                        {
-                            lt: 0,
-                            color: "#0F0",
-                            opacity: 0.5
-                        }
-                    ],
-                    show: false,
-                    seriesIndex: 12
                 }
+                // {
+                //     type: "piecewise",
+                //     pieces: [
+                //         {
+                //             gte: 0,
+                //             color: "#F00",
+                //             opacity: 0.5
+                //         },
+                //         {
+                //             lt: 0,
+                //             color: "#0F0",
+                //             opacity: 0.5
+                //         }
+                //     ],
+                //     show: false,
+                //     seriesIndex: 12
+                // }
             ]
         };
     };
@@ -821,7 +840,8 @@ export default function(store, graphElementId, props) {
         series[9].data = data && data.kc && data.kc[1];
         series[10].data = data && data.kc && data.kc[2];
         series[11].data = data && data.values;
-        series[12].data = data && data.mtm;
+        series[12].data = data && data.squeeze && data.squeeze[9];
+        series[13].data = data && data.squeeze && data.squeeze[8];
 
         xAxis[0].data = data && data.categoryData;
         xAxis[1].data = data && data.categoryData;

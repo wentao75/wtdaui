@@ -488,14 +488,14 @@ export default function(store, graphElementId, props) {
                             (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
                             "] <br/>",
                         "MTM: [" +
-                            (paramMTM && paramMTM.data) +
-                            ", [" +
                             (paramWavea && paramWavea.data[1]) +
                             ", " +
                             (paramWaveb && paramWaveb.data) +
                             ", " +
                             (paramWavec && paramWavec.data) +
-                            "] <br/>"
+                            "], " +
+                            (paramMTM && paramMTM.data) +
+                            " <br/>"
                     ].join("");
                 }
                 // extraCssText: 'width: 170px'

@@ -14,7 +14,7 @@ import {
 } from "@wt/lib-wtda-query";
 
 import _ from "lodash";
-import { favorites } from "@wt/lib-stock";
+import { favorites, search } from "@wt/lib-stock";
 
 import xueqiu from "./data/xueqiu";
 import log from "electron-log";
@@ -172,10 +172,12 @@ async function prepareStockList() {
         //         }
         //     }
         // }
+        let reports = await search.readReports();
         return {
             stock: stockListData.data,
             index: indexListData.data,
-            favorites: favoritesData.favorites // favList
+            favorites: favoritesData.favorites, // favList
+            reports
         };
     } catch (error) {
         log.error(`读取股票/指数列表时发生异常：${error}`);

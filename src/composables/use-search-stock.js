@@ -158,6 +158,7 @@ export function useSearchStock(
         loading,
         dailyData,
         queryStockCode,
-        handleSelect
+        handleSelect,
+        refreshGraph
     };
 }

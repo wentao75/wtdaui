@@ -1,62 +1,109 @@
 <template>
     <el-container>
-        <el-header>
-            <el-button-group>
-                <el-button
-                    v-if="$store.getters.isFavorite(selectedTsCode)"
-                    type="info"
-                    icon="el-icon-star-off"
-                    size="small"
-                    @click="removeFavorite"
-                    circle
-                ></el-button>
-                <el-button
-                    v-if="!$store.getters.isFavorite(selectedTsCode)"
-                    type="success"
-                    icon="el-icon-star-off"
-                    size="small"
-                    @click="addFavorite"
-                    circle
-                ></el-button>
-            </el-button-group>
-            <el-autocomplete
-                popper-class="my-autocomplete"
-                placeholder="请输入股票代码"
-                v-model="tsCode"
-                :fetch-suggestions="queryStockCode"
-                @select="handleSelect"
-                clearable
+        <el-aside style="width: 220px;">
+            <el-menu
+                :collapse="false"
+                :default-active="1"
+                :default-openeds="[1, 2]"
+                @select="handleSelectMenu"
             >
-                <template slot-scope="{ item }">
-                    <span class="stockcode"> {{ item.value }}</span
-                    ><span class="stockname">{{ item.name }}</span>
-                </template>
-            </el-autocomplete>
-
-            <el-radio-group v-model="activeGraph">
-                <el-radio-button label="squeeze" value="squeeze"
-                    >鸡排</el-radio-button
+                <el-submenu index="1">
+                    <template slot="title">
+                        <i class="el-icon-s-home"></i>
+                        <span slot="title">自选</span>
+                    </template>
+                    <!-- <el-menu-item-group> -->
+                    <el-menu-item
+                        style="line-height: 24px; height: 26px; padding-right: 10px;"
+                        :index="item.value"
+                        v-for="item in $store.state.favoriteList"
+                        :key="item.value"
+                    >
+                        <el-col>
+                            <span class="stockcode">{{ item.ts_code }}</span>
+                            <span class="stockname">{{ item.name }}</span>
+                        </el-col>
+                    </el-menu-item>
+                    <!-- </el-menu-item-group> -->
+                </el-submenu>
+                <el-submenu index="2">
+                    <template slot="title">
+                        <i class="el-icon-finished"></i>
+                        <span slot="title">鸡排</span>
+                    </template>
+                    <!-- <el-menu-item
+                        style="line-height: 24px; height: 26px; padding-right: 10px;"
+                        :index="item.value"
+                        v-for="item in $store.state.favoriteList"
+                        :key="item.value"
+                    >
+                        <el-col>
+                            <span class="stockcode">{{ item.ts_code }}</span>
+                            <span class="stockname">{{ item.name }}</span>
+                        </el-col>
+                    </el-menu-item> -->
+                </el-submenu>
+            </el-menu>
+        </el-aside>
+        <el-container>
+            <el-header>
+                <el-button-group>
+                    <el-button
+                        v-if="$store.getters.isFavorite(selectedTsCode)"
+                        type="info"
+                        icon="el-icon-star-off"
+                        size="small"
+                        @click="removeFavorite"
+                        circle
+                    ></el-button>
+                    <el-button
+                        v-if="!$store.getters.isFavorite(selectedTsCode)"
+                        type="success"
+                        icon="el-icon-star-off"
+                        size="small"
+                        @click="addFavorite"
+                        circle
+                    ></el-button>
+                </el-button-group>
+                <el-autocomplete
+                    popper-class="my-autocomplete"
+                    placeholder="请输入股票代码"
+                    v-model="tsCode"
+                    :fetch-suggestions="queryStockCode"
+                    @select="handleSelect"
+                    clearable
                 >
-                <el-radio-button label="daily" value="daily"
-                    >日常</el-radio-button
-                >
-            </el-radio-group>
-        </el-header>
+                    <template slot-scope="{ item }">
+                        <span class="stockcode">{{ item.value }}</span>
+                        <span class="stockname">{{ item.name }}</span>
+                    </template>
+                </el-autocomplete>
 
-        <el-main v-loading="loading || !$store.state.initDataFinished">
-            <SqueezeGraph
-                v-if="activeGraph === 'squeeze'"
-                :tsCode="selectedTsCode"
-                :data="dailyData"
-                :rtData="refRTData"
-            />
-            <DailyGraph
-                v-if="activeGraph === 'daily'"
-                :tsCode="selectedTsCode"
-                :data="dailyData"
-                :rtData="refRTData"
-            />
-        </el-main>
+                <el-radio-group v-model="activeGraph">
+                    <el-radio-button label="squeeze" value="squeeze"
+                        >鸡排</el-radio-button
+                    >
+                    <el-radio-button label="daily" value="daily"
+                        >日常</el-radio-button
+                    >
+                </el-radio-group>
+            </el-header>
+
+            <el-main v-loading="loading || !$store.state.initDataFinished">
+                <SqueezeGraph
+                    v-if="activeGraph === 'squeeze'"
+                    :tsCode="selectedTsCode"
+                    :data="dailyData"
+                    :rtData="refRTData"
+                />
+                <DailyGraph
+                    v-if="activeGraph === 'daily'"
+                    :tsCode="selectedTsCode"
+                    :data="dailyData"
+                    :rtData="refRTData"
+                />
+            </el-main>
+        </el-container>
     </el-container>
 </template>
 
@@ -79,6 +126,7 @@ export default {
             activeGraph: "squeeze"
         };
     },
+    methods: {},
     setup() {
         const store = useStore();
         const {
@@ -87,7 +135,8 @@ export default {
             loading,
             dailyData,
             queryStockCode,
-            handleSelect
+            handleSelect,
+            refreshGraph
         } = useSearchStock(store, "stockDaily");
 
         const { refRTData } = useUpdateQuote(selectedTsCode);
@@ -96,6 +145,12 @@ export default {
             store,
             selectedTsCode
         );
+
+        const handleSelectMenu = index => {
+            // console.log(`menu select ${index}`);
+            tsCode.value = index;
+            refreshGraph();
+        };
 
         return {
             tsCode,
@@ -106,9 +161,12 @@ export default {
             // updateDaily,
             queryStockCode,
             handleSelect,
+            refreshGraph,
 
             addFavorite,
-            removeFavorite
+            removeFavorite,
+
+            handleSelectMenu
         };
     },
 
@@ -151,5 +209,9 @@ export default {
     margin: 0px;
     width: 100%;
     height: 100%;
+}
+
+.el-menu-item {
+    line-height: 24px;
 }
 </style>

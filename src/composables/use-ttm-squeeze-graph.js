@@ -20,6 +20,8 @@ export default function(store, graphElementId, props) {
         let squeezeFlags = [];
         // let mm = []; // 动量数据
         // let waves = [];
+        let ema8 = [];
+        let ema21 = [];
 
         let dailyData = rawData.data;
         utils.checkTradeData(dailyData);
@@ -60,6 +62,19 @@ export default function(store, graphElementId, props) {
 
         let scalper = indicators.Scalper.calculate(dailyData);
         // console.log(`scalper: %o`, scalper);
+
+        ema8 = indicators.MA.calculate(dailyData, {
+            n: 8,
+            type: "ema",
+            source: "close",
+            digits: 3
+        });
+        ema21 = indicators.MA.calculate(dailyData, {
+            n: 21,
+            type: "ema",
+            source: "close",
+            digits: 3
+        });
 
         // let mtmData2 = indicators.MTM.calculate(dailyData, {
         //     n: 16,
@@ -157,6 +172,8 @@ export default function(store, graphElementId, props) {
             ttmwave: ttmwaveData,
             squeeze: squeezeData,
             scalper,
+            ema8,
+            ema21,
             flags: squeezeFlags,
             info: stockData.info
         };
@@ -400,14 +417,13 @@ export default function(store, graphElementId, props) {
                 // bottom: 10,
                 right: "5%",
                 data: [
-                    "ATR-均值",
-                    "ATR-上",
-                    "ATR-下",
-                    "挤牌-均值",
-                    "挤牌-B上",
-                    "挤牌-B下",
-                    "挤牌-K上",
-                    "挤牌-K下",
+                    "均线8",
+                    "均线21",
+                    // "挤牌-均值",
+                    // "挤牌-B上",
+                    // "挤牌-B下",
+                    // "挤牌-K上",
+                    // "挤牌-K下",
                     "WaveA",
                     "WaveB",
                     "WaveC"
@@ -433,45 +449,55 @@ export default function(store, graphElementId, props) {
                 },
                 formatter: function(params) {
                     let paramK;
-                    let paramKC = [];
-                    let paramBOLL = [];
+                    // let paramKC = [];
+                    // let paramBOLL = [];
                     let paramMTM;
                     let paramWavea = [];
                     let paramWaveb = [];
                     let paramWavec = [];
+                    let paramEma8;
+                    let paramEma21;
                     params.forEach(param => {
-                        if (param.seriesIndex >= 1 && param.seriesIndex <= 3) {
-                            paramKC[param.seriesIndex - 1] = param;
-                        } else if (param.seriesIndex === 0) {
+                        // if (param.seriesIndex >= 1 && param.seriesIndex <= 3) {
+                        //     paramKC[param.seriesIndex - 1] = param;
+                        // } else
+                        if (param.seriesIndex === 0) {
                             paramK = param;
-                        } else if (
-                            param.seriesIndex === 4 ||
-                            param.seriesIndex === 5
-                        ) {
-                            paramBOLL[param.seriesIndex - 4] = param;
-                        } else if (param.seriesIndex === 6) {
+                            // } else if (
+                            //     param.seriesIndex === 4 ||
+                            //     param.seriesIndex === 5
+                            // ) {
+                            //     paramBOLL[param.seriesIndex - 4] = param;
+                        } else if (param.seriesIndex === 6 - 5) {
                             paramMTM = param;
-                        } else if (param.seriesIndex === 8) {
+                        } else if (param.seriesIndex === 8 - 5) {
                             paramWavea[0] = param;
-                        } else if (param.seriesIndex === 9) {
+                        } else if (param.seriesIndex === 9 - 5) {
                             paramWavea[1] = param;
-                        } else if (param.seriesIndex === 10) {
+                        } else if (param.seriesIndex === 10 - 5) {
                             paramWaveb[0] = param;
-                        } else if (param.seriesIndex === 11) {
+                        } else if (param.seriesIndex === 11 - 5) {
                             paramWaveb[1] = param;
-                        } else if (param.seriesIndex === 12) {
+                        } else if (param.seriesIndex === 12 - 5) {
                             paramWavec[0] = param;
-                        } else if (param.seriesIndex === 13) {
+                        } else if (param.seriesIndex === 13 - 5) {
                             paramWavec[1] = param;
+                        } else if (param.seriesIndex === 14 - 5) {
+                            paramEma8 = param;
+                        } else if (param.seriesIndex === 15 - 5) {
+                            paramEma21 = param;
                         }
                     });
 
                     return [
                         paramK.name + '<hr size=1 style="margin: 3px 0">',
-                        "均值: " +
-                            (paramKC && paramKC[0] && paramKC[0].data) +
-                            " [" +
-                            (paramMTM && paramMTM.data[2]) +
+                        // "均值: " +
+                        //     (paramKC && paramKC[0] && paramKC[0].data) +
+                        "信号 [" + (paramMTM && paramMTM.data[2]) + "] <br/>",
+                        "EMA: [" +
+                            (paramEma8 && paramEma8.data) +
+                            ", " +
+                            (paramEma21 && paramEma21.data) +
                             "] <br/>",
                         "开: " +
                             (paramK && paramK.data && paramK.data[1]) +
@@ -483,16 +509,16 @@ export default function(store, graphElementId, props) {
                             " 低: " +
                             (paramK && paramK.data && paramK.data[3]) +
                             "<br/>",
-                        "KC  : [" +
-                            (paramKC && paramKC[1] && paramKC[1].data) +
-                            ", " +
-                            (paramKC && paramKC[2] && paramKC[2].data) +
-                            "] <br/>",
-                        "BOLL: [" +
-                            (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
-                            ", " +
-                            (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
-                            "] <br/>",
+                        // "KC  : [" +
+                        //     (paramKC && paramKC[1] && paramKC[1].data) +
+                        //     ", " +
+                        //     (paramKC && paramKC[2] && paramKC[2].data) +
+                        //     "] <br/>",
+                        // "BOLL: [" +
+                        //     (paramBOLL && paramBOLL[0] && paramBOLL[0].data) +
+                        //     ", " +
+                        //     (paramBOLL && paramBOLL[1] && paramBOLL[1].data) +
+                        //     "] <br/>",
                         "MTM: " + (paramMTM && paramMTM.data[1]) + "<br/>",
                         "Wave A: [" +
                             (paramWavea && paramWavea[0].data) +
@@ -753,71 +779,71 @@ export default function(store, graphElementId, props) {
                         borderWidth: 2
                     }
                 },
-                {
-                    // 1
-                    name: "挤牌-均值",
-                    type: "line",
-                    data: data && data.squeeze && data.squeeze[0],
-                    symbol: "none",
-                    smooth: false,
-                    lineStyle: {
-                        color: "#ff0",
-                        opacity: 0.5,
-                        width: 1
-                    }
-                },
-                {
-                    // 2
-                    name: "挤牌-K上",
-                    type: "line",
-                    data: data && data.squeeze && data.squeeze[3],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#0ff",
-                        width: 2,
-                        opacity: 0.5
-                    }
-                },
-                {
-                    // 3
-                    name: "挤牌-K下",
-                    type: "line",
-                    data: data && data.squeeze && data.squeeze[4],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#0ff",
-                        width: 2,
-                        opacity: 0.5
-                    }
-                },
-                {
-                    // 4
-                    name: "挤牌-B上",
-                    type: "line",
-                    data: data && data.squeeze && data.squeeze[1],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#bbb",
-                        width: 1,
-                        opacity: 0.5
-                    }
-                },
-                {
-                    // 5
-                    name: "挤牌-B下",
-                    type: "line",
-                    data: data && data.squeeze && data.squeeze[2],
-                    showSymbol: false,
-                    smooth: false,
-                    lineStyle: {
-                        color: "#bbb",
-                        width: 1,
-                        opacity: 0.5
-                    }
-                },
+                // {
+                //     // 1
+                //     name: "挤牌-均值",
+                //     type: "line",
+                //     data: data && data.squeeze && data.squeeze[0],
+                //     symbol: "none",
+                //     smooth: false,
+                //     lineStyle: {
+                //         color: "#ff0",
+                //         opacity: 0.5,
+                //         width: 1
+                //     }
+                // },
+                // {
+                //     // 2
+                //     name: "挤牌-K上",
+                //     type: "line",
+                //     data: data && data.squeeze && data.squeeze[3],
+                //     showSymbol: false,
+                //     smooth: false,
+                //     lineStyle: {
+                //         color: "#0ff",
+                //         width: 2,
+                //         opacity: 0.5
+                //     }
+                // },
+                // {
+                //     // 3
+                //     name: "挤牌-K下",
+                //     type: "line",
+                //     data: data && data.squeeze && data.squeeze[4],
+                //     showSymbol: false,
+                //     smooth: false,
+                //     lineStyle: {
+                //         color: "#0ff",
+                //         width: 2,
+                //         opacity: 0.5
+                //     }
+                // },
+                // {
+                //     // 4
+                //     name: "挤牌-B上",
+                //     type: "line",
+                //     data: data && data.squeeze && data.squeeze[1],
+                //     showSymbol: false,
+                //     smooth: false,
+                //     lineStyle: {
+                //         color: "#bbb",
+                //         width: 1,
+                //         opacity: 0.5
+                //     }
+                // },
+                // {
+                //     // 5
+                //     name: "挤牌-B下",
+                //     type: "line",
+                //     data: data && data.squeeze && data.squeeze[2],
+                //     showSymbol: false,
+                //     smooth: false,
+                //     lineStyle: {
+                //         color: "#bbb",
+                //         width: 1,
+                //         opacity: 0.5
+                //     }
+                // },
                 {
                     // 6
                     name: "挤牌-能量",
@@ -936,6 +962,32 @@ export default function(store, graphElementId, props) {
                     itemStyle: {
                         color: "#FF4500"
                     }
+                },
+                {
+                    // 14
+                    name: "均线8",
+                    type: "line",
+                    data: data && data.ema8,
+                    symbol: "none",
+                    smooth: false,
+                    lineStyle: {
+                        color: "#fff",
+                        opacity: 0.6,
+                        width: 1
+                    }
+                },
+                {
+                    // 15
+                    name: "均线21",
+                    type: "line",
+                    data: data && data.ema21,
+                    symbol: "none",
+                    smooth: false,
+                    lineStyle: {
+                        color: "#fff",
+                        opacity: 1,
+                        width: 1.5
+                    }
                 }
             ],
             visualMap: [
@@ -954,7 +1006,7 @@ export default function(store, graphElementId, props) {
                         { value: indicators.SQUEEZE.states.SELL, color: "#0F0" }
                     ],
                     show: false,
-                    seriesIndex: 6,
+                    seriesIndex: 1,
                     dimensions: 2
                 }
                 // {
@@ -1020,20 +1072,22 @@ export default function(store, graphElementId, props) {
         let xAxis = option.xAxis;
 
         series[0].data = data && data.values;
-        series[1].data = data && data.squeeze && data.squeeze[0];
-        series[2].data = data && data.squeeze && data.squeeze[3];
-        series[3].data = data && data.squeeze && data.squeeze[4];
-        series[4].data = data && data.squeeze && data.squeeze[1];
-        series[5].data = data && data.squeeze && data.squeeze[2];
-        series[6].data = data && data.squeeze && data.squeeze[5];
-        series[7].data = data && data.flags;
-        series[8].data = data && data.ttmwave[1];
-        series[9].data = data && data.ttmwave[0];
-        series[10].data = data && data.ttmwave[3];
-        series[11].data = data && data.ttmwave[2];
+        // series[1].data = data && data.squeeze && data.squeeze[0];
+        // series[2].data = data && data.squeeze && data.squeeze[3];
+        // series[3].data = data && data.squeeze && data.squeeze[4];
+        // series[4].data = data && data.squeeze && data.squeeze[1];
+        // series[5].data = data && data.squeeze && data.squeeze[2];
+        series[6 - 5].data = data && data.squeeze && data.squeeze[5];
+        series[7 - 5].data = data && data.flags;
+        series[8 - 5].data = data && data.ttmwave[1];
+        series[9 - 5].data = data && data.ttmwave[0];
+        series[10 - 5].data = data && data.ttmwave[3];
+        series[11 - 5].data = data && data.ttmwave[2];
         // series[12].data = data && data.ttmwave[5];
-        series[12].data = data && data.ttmwave[6];
-        series[13].data = data && data.ttmwave[4];
+        series[12 - 5].data = data && data.ttmwave[6];
+        series[13 - 5].data = data && data.ttmwave[4];
+        series[14 - 5].data = data && data.ema8;
+        series[15 - 5].data = data && data.ema21;
 
         xAxis[0].data = data && data.categoryData;
         xAxis[1].data = data && data.categoryData;

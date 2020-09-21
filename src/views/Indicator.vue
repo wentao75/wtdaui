@@ -1,12 +1,7 @@
 <template>
     <el-container>
-        <el-aside style="width: 220px;">
-            <el-menu
-                :collapse="false"
-                :default-active="1"
-                :default-openeds="[1, 2]"
-                @select="handleSelectMenu"
-            >
+        <el-aside style="width: 200px;">
+            <el-menu :collapse="false" @select="handleSelectMenu">
                 <el-submenu index="1">
                     <template slot="title">
                         <i class="el-icon-s-home"></i>
@@ -14,7 +9,7 @@
                     </template>
                     <!-- <el-menu-item-group> -->
                     <el-menu-item
-                        style="line-height: 24px; height: 26px; padding-right: 10px;"
+                        style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
                         :index="item.value"
                         v-for="item in $store.state.favoriteList"
                         :key="item.value"
@@ -31,17 +26,62 @@
                         <i class="el-icon-finished"></i>
                         <span slot="title">鸡排</span>
                     </template>
-                    <!-- <el-menu-item
-                        style="line-height: 24px; height: 26px; padding-right: 10px;"
-                        :index="item.value"
-                        v-for="item in $store.state.favoriteList"
-                        :key="item.value"
-                    >
-                        <el-col>
-                            <span class="stockcode">{{ item.ts_code }}</span>
-                            <span class="stockname">{{ item.name }}</span>
-                        </el-col>
-                    </el-menu-item> -->
+                    <el-submenu index="2-1">
+                        <template slot="title">买入</template>
+                        <el-submenu
+                            :index="'2-1-' + index"
+                            v-for="(list, index) in $store.state.squeezeList &&
+                                $store.state.squeezeList[0]"
+                            :key="'2-1-' + index"
+                        >
+                            <template slot="title"
+                                >分组{{ index + 1 }}</template
+                            >
+                            <el-menu-item
+                                style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
+                                :index="item.ts_code"
+                                v-for="item in list"
+                                :key="item.ts_code"
+                            >
+                                <el-col>
+                                    <span class="stockcode">{{
+                                        item.ts_code
+                                    }}</span>
+                                    <span class="stockname">{{
+                                        item.name
+                                    }}</span>
+                                </el-col>
+                            </el-menu-item>
+                        </el-submenu>
+                    </el-submenu>
+                    <el-submenu index="2-2">
+                        <template slot="title">准备</template>
+                        <el-submenu
+                            :index="'2-2-' + index"
+                            v-for="(list, index) in $store.state.squeezeList &&
+                                $store.state.squeezeList[1]"
+                            :key="'2-2-' + index"
+                        >
+                            <template slot="title"
+                                >分组{{ index + 1 }}</template
+                            >
+                            <el-menu-item
+                                style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
+                                :index="item.ts_code"
+                                v-for="item in list"
+                                :key="item.ts_code"
+                            >
+                                <el-col>
+                                    <span class="stockcode">{{
+                                        item.ts_code
+                                    }}</span>
+                                    <span class="stockname">{{
+                                        item.name
+                                    }}</span>
+                                </el-col>
+                            </el-menu-item>
+                        </el-submenu>
+                    </el-submenu>
                 </el-submenu>
             </el-menu>
         </el-aside>
@@ -212,6 +252,11 @@ export default {
 }
 
 .el-menu-item {
+    height: 26px;
+    line-height: 24px;
+}
+.el-menu-item {
+    height: 26px;
     line-height: 24px;
 }
 </style>

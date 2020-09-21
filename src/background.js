@@ -146,13 +146,13 @@ async function prepareStockList() {
         let favoritesData = await favorites.readFavorites();
         if (!favoritesData || _.isEmpty(favoritesData.favorites)) {
             await favorites.addFavorites([
-                "600036.SH",
-                "601318.SH",
-                "600276.SH",
-                "600489.SH",
-                "000725.SZ",
-                "000568.SZ",
-                "002352.SZ"
+                // "600036.SH",
+                // "601318.SH",
+                // "600276.SH",
+                // "600489.SH",
+                // "000725.SZ",
+                // "000568.SZ",
+                // "002352.SZ"
             ]);
         }
         log.info(
@@ -173,6 +173,12 @@ async function prepareStockList() {
         //     }
         // }
         let reports = await search.readReports();
+        log.info(
+            `获得报告列表：${reports &&
+                reports.squeeze &&
+                reports.squeeze.buyList &&
+                reports.squeeze.buyList.length}`
+        );
         return {
             stock: stockListData.data,
             index: indexListData.data,

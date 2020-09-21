@@ -12,7 +12,8 @@ export default new Vuex.Store({
         symbolMap: null,
         stockList: null,
         indexList: null,
-        favoriteList: null
+        favoriteList: null,
+        squeezeList: null
     },
     getters: {
         isFavorite: state => symbol => {
@@ -96,6 +97,9 @@ export default new Vuex.Store({
         setDefaultStockCode(state, data) {
             console.log(`设置默认代码：${data}`);
             state.defaultStockCode = data;
+        },
+        setSqueezes(state, data) {
+            state.squeezeList = data;
         }
     },
     actions: {
@@ -170,6 +174,44 @@ export default new Vuex.Store({
             if (favList && favList.length > 0) {
                 commit("setDefaultStockCode", favList[0].ts_code);
             }
+
+            let squeezeList = [[], []];
+            if (data && data.reports && data.reports.squeeze) {
+                if (data.reports.squeeze.buyList) {
+                    for (let list of data.reports.squeeze.buyList) {
+                        if (_.isEmpty(list)) continue;
+                        let tmpList = [];
+                        for (let code of list) {
+                            let stock = tmpStockMap.get(code);
+                            if (stock) {
+                                tmpList.push({
+                                    ts_code: code,
+                                    name: stock.name
+                                });
+                            }
+                        }
+                        squeezeList[0].push(tmpList);
+                    }
+                }
+                if (data.reports.squeeze.readyList) {
+                    for (let list of data.reports.squeeze.readyList) {
+                        if (_.isEmpty(list)) continue;
+                        let tmpList = [];
+                        for (let code of list) {
+                            let stock = tmpStockMap.get(code);
+                            if (stock) {
+                                tmpList.push({
+                                    ts_code: code,
+                                    name: stock.name
+                                });
+                            }
+                        }
+                        squeezeList[1].push(tmpList);
+                    }
+                }
+            }
+            console.log(`squeeze: %o`, squeezeList);
+            commit("setSqueezes", squeezeList);
 
             commit("setInitDataFinished");
             tmpIndexMap = null;

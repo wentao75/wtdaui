@@ -20,6 +20,7 @@ export default function(store, graphElementId, props) {
         let squeezeFlags = [];
         // let mm = []; // 动量数据
         // let waves = [];
+        let ema50 = [];
         let ema8 = [];
         let ema21 = [];
 
@@ -30,6 +31,11 @@ export default function(store, graphElementId, props) {
         // let mmsource = "hl";
         console.log(`params: %o`, props.params);
         let digits = 3;
+
+        let trends = indicators.TTMTrend.calculate(dailyData, {
+            n: 6,
+            type: "HA"
+        });
 
         // 基础的Squeeze数据
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
@@ -63,6 +69,12 @@ export default function(store, graphElementId, props) {
         let scalper = indicators.Scalper.calculate(dailyData);
         // console.log(`scalper: %o`, scalper);
 
+        ema50 = indicators.MA.calculate(dailyData, {
+            n: 50,
+            type: "ema",
+            source: "close",
+            digits: 3
+        });
         ema8 = indicators.MA.calculate(dailyData, {
             n: 8,
             type: "ema",
@@ -103,52 +115,13 @@ export default function(store, graphElementId, props) {
 
         for (let i = 0; i < dailyData.length; i++) {
             categoryData.push(dailyData[i].trade_date);
-            let up = dailyData[i].close >= dailyData[i].open;
-            // HA pattern
-            if (i > 0) {
-                let o = (dailyData[i - 1].open + dailyData[i - 1].close) / 2;
-                let c =
-                    (dailyData[i].open +
-                        dailyData[i].high +
-                        dailyData[i].low +
-                        dailyData[i].close) /
-                    4;
-                //up = c >= o;
-                // 1/0表示正常升降，3/2表示修改升降
-                if (up) {
-                    up = c >= o ? 1 : 2;
-                } else {
-                    up = c >= o ? 3 : 0;
-                }
-            }
-            // TTM pattern
-            // if (i > 6) {
-            //     let upTotal = !up;
-            //     for (let j = 0; j < 6; j++) {
-            //         let c =
-            //             (dailyData[i - 1 - j].open +
-            //                 dailyData[i - 1 - j].high +
-            //                 dailyData[i - 1 - j].low +
-            //                 dailyData[i - 1 - j].close) /
-            //             4;
-            //         let o =
-            //             (dailyData[i - 1 - j].high + dailyData[i - 1 - j].low) /
-            //             2;
-            //         if ((c >= o && upTotal) || (c < o && !upTotal)) continue;
-            //         else {
-            //             upTotal = up;
-            //             break;
-            //         }
-            //     }
-            //     up = upTotal;
-            // }
             values.push([
                 dailyData[i].trade_date,
                 dailyData[i].open,
                 dailyData[i].close,
                 dailyData[i].low,
                 dailyData[i].high,
-                up,
+                trends[i],
                 scalper[i][1]
             ]);
 
@@ -172,6 +145,7 @@ export default function(store, graphElementId, props) {
             ttmwave: ttmwaveData,
             squeeze: squeezeData,
             scalper,
+            ema50,
             ema8,
             ema21,
             flags: squeezeFlags,
@@ -191,13 +165,6 @@ export default function(store, graphElementId, props) {
         let halfWidth = api.size([1, 0])[0] * 0.25;
         let color =
             up === 1 ? "#f00" : up === 0 ? "#0f0" : up === 2 ? "#0ff" : "#f99";
-        // if (
-        //     scalper === indicators.Scalper.states.BUY_READY ||
-        //     scalper === indicators.Scalper.states.SELL_READY
-        // ) {
-        //     console.log(`有标记：${xValue}, ${scalper}`);
-        //     color = "#fff";
-        // }
         let style = api.style({
             stroke: color,
             fill: color
@@ -211,49 +178,9 @@ export default function(store, graphElementId, props) {
         if (scalper === indicators.Scalper.states.BUY_READY) {
             // 画一个向上的红色三角形
             invisibleUp = false;
-            // flagChild = {
-            //     type: "polyline",
-            //     shape: {
-            //         points: [
-            //             [lowPoint[0], lowPoint[1] + 8],
-            //             [
-            //                 lowPoint[0] - flagHalfWidth,
-            //                 lowPoint[1] + 8 + flagHeight
-            //             ],
-            //             [
-            //                 lowPoint[0] + flagHalfWidth,
-            //                 lowPoint[1] + 8 + flagHeight
-            //             ]
-            //         ]
-            //     },
-            //     style: api.style({
-            //         stroke: "#F00",
-            //         fill: "#F00"
-            //     })
-            // };
         } else if (scalper === indicators.Scalper.states.SELL_READY) {
             // 画一个向下的绿色三角形
             invisibleDown = false;
-            // flagChild = {
-            //     type: "polyline",
-            //     shape: {
-            //         points: [
-            //             [highPoint[0], highPoint[1] - 8],
-            //             [
-            //                 highPoint[0] - flagHalfWidth,
-            //                 highPoint[1] - 8 - flagHeight
-            //             ],
-            //             [
-            //                 highPoint[0] + flagHalfWidth,
-            //                 highPoint[1] - 8 - flagHeight
-            //             ]
-            //         ]
-            //     },
-            //     style: api.style({
-            //         stroke: "#0F0",
-            //         fill: "#0F0"
-            //     })
-            // };
         }
         // console.log(`params: %o， api, %o`, params, api);
 
@@ -419,6 +346,7 @@ export default function(store, graphElementId, props) {
                 data: [
                     "均线8",
                     "均线21",
+                    "均线50",
                     // "挤牌-均值",
                     // "挤牌-B上",
                     // "挤牌-B下",
@@ -455,6 +383,7 @@ export default function(store, graphElementId, props) {
                     let paramWavea = [];
                     let paramWaveb = [];
                     let paramWavec = [];
+                    let paramEma50;
                     let paramEma8;
                     let paramEma21;
                     params.forEach(param => {
@@ -486,6 +415,8 @@ export default function(store, graphElementId, props) {
                             paramEma8 = param;
                         } else if (param.seriesIndex === 15 - 5) {
                             paramEma21 = param;
+                        } else if (param.seriesIndex === 16 - 5) {
+                            paramEma50 = param;
                         }
                     });
 
@@ -498,6 +429,8 @@ export default function(store, graphElementId, props) {
                             (paramEma8 && paramEma8.data) +
                             ", " +
                             (paramEma21 && paramEma21.data) +
+                            ", " +
+                            (paramEma50 && paramEma50.data) +
                             "] <br/>",
                         "开: " +
                             (paramK && paramK.data && paramK.data[1]) +
@@ -972,8 +905,9 @@ export default function(store, graphElementId, props) {
                     smooth: false,
                     lineStyle: {
                         color: "#fff",
-                        opacity: 0.6,
-                        width: 1
+                        opacity: 1,
+                        width: 1,
+                        type: "dotted"
                     }
                 },
                 {
@@ -986,7 +920,21 @@ export default function(store, graphElementId, props) {
                     lineStyle: {
                         color: "#fff",
                         opacity: 1,
-                        width: 1.5
+                        width: 1
+                        // type: "dashed"
+                    }
+                },
+                {
+                    // 16
+                    name: "均线50",
+                    type: "line",
+                    data: data && data.ema50,
+                    symbol: "none",
+                    smooth: false,
+                    lineStyle: {
+                        color: "#999",
+                        opacity: 0.6,
+                        width: 2
                     }
                 }
             ],
@@ -1088,6 +1036,7 @@ export default function(store, graphElementId, props) {
         series[13 - 5].data = data && data.ttmwave[4];
         series[14 - 5].data = data && data.ema8;
         series[15 - 5].data = data && data.ema21;
+        series[16 - 5].data = data && data.ema50;
 
         xAxis[0].data = data && data.categoryData;
         xAxis[1].data = data && data.categoryData;

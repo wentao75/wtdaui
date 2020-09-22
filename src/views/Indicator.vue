@@ -35,7 +35,9 @@
                             :key="'2-1-' + index"
                         >
                             <template slot="title"
-                                >分组{{ index + 1 }}</template
+                                ><el-badge :value="list.length" class="item"
+                                    >分组{{ index + 1 }}</el-badge
+                                ></template
                             >
                             <el-menu-item
                                 style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
@@ -62,8 +64,10 @@
                                 $store.state.squeezeList[1]"
                             :key="'2-2-' + index"
                         >
-                            <template slot="title"
-                                >分组{{ index + 1 }}</template
+                            <template slot="title">
+                                <el-badge :value="list.length" class="item">
+                                    分组{{ index + 1 }}</el-badge
+                                ></template
                             >
                             <el-menu-item
                                 style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
@@ -255,8 +259,8 @@ export default {
     height: 26px;
     line-height: 24px;
 }
-.el-menu-item {
-    height: 26px;
-    line-height: 24px;
+.item {
+    padding-left: 0px;
+    height: 36px;
 }
 </style>

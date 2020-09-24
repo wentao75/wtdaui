@@ -904,7 +904,7 @@ export default function(store, graphElementId, props) {
                     symbol: "none",
                     smooth: false,
                     lineStyle: {
-                        color: "#fff",
+                        color: "#f00",
                         opacity: 1,
                         width: 1,
                         type: "dotted"
@@ -918,7 +918,7 @@ export default function(store, graphElementId, props) {
                     symbol: "none",
                     smooth: false,
                     lineStyle: {
-                        color: "#fff",
+                        color: "#f00",
                         opacity: 1,
                         width: 1
                         // type: "dashed"

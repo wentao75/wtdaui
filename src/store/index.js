@@ -176,23 +176,26 @@ export default new Vuex.Store({
             }
 
             // 这里需要调整报告数据的格式，同时将必要的数据填入
-            let reportLists = [];
+            // let reportLists = [];
             if (data && data.reports) {
                 let reports = data.reports;
-                if (!_.isNil(reports)) {
-                    for (let rpt in reports) {
-                        if (rpt === "updateTime") continue;
-                        let rptData = reports[rpt];
-                        let dataLists = [];
-                        if (!_.isNil(rptData)) {
-                            for (let stateName in rptData) {
-                                let dataList = rptData[stateName];
+                if (!_.isNil(reports) && !_.isEmpty(reports)) {
+                    for (let rptData of reports) {
+                        //let rptData = reports[rpt];
+                        // let dataLists = [];
+                        if (
+                            rptData &&
+                            rptData.data &&
+                            rptData.data.length > 0
+                        ) {
+                            for (let dataList of rptData.data) {
+                                // let dataList = rptData[stateName];
 
-                                let tmpData = [];
-                                for (let list of dataList) {
-                                    if (_.isEmpty(list)) continue;
+                                // let tmpData = [];
+                                for (let list of dataList.data) {
+                                    // if (_.isEmpty(list)) continue;
                                     let tmpList = [];
-                                    for (let code of list) {
+                                    for (let code of list.data) {
                                         let stock = tmpStockMap.get(code);
                                         if (stock) {
                                             tmpList.push({
@@ -201,26 +204,27 @@ export default new Vuex.Store({
                                             });
                                         }
                                     }
-                                    tmpData.push(tmpList);
-                                    console.log(
-                                        `报告数据：${rpt}-${stateName}[${tmpData.length -
-                                            1}] ${tmpList.length}条`
-                                    );
+                                    list.data = tmpList;
+                                    // tmpData.push(tmpList);
+                                    // console.log(
+                                    //     `报告数据：${rpt}-${stateName}[${tmpData.length -
+                                    //         1}] ${tmpList.length}条`
+                                    // );
                                 }
 
-                                dataLists.push({
-                                    label: stateName,
-                                    data: tmpData
-                                });
+                                // dataLists.push({
+                                //     label: stateName,
+                                //     data: tmpData
+                                // });
                                 // console.log(
                                 //     `报告数据：${rpt}-${stateName} ${tmpData.length}条`
                                 // );
                             }
                         }
-                        reportLists.push({
-                            label: rpt,
-                            data: dataLists
-                        });
+                        // reportLists.push({
+                        //     label: rpt,
+                        //     data: dataLists
+                        // });
                     }
                 }
             }
@@ -260,8 +264,8 @@ export default new Vuex.Store({
             //         }
             //     }
             // }
-            console.log(`squeeze: %o`, reportLists);
-            commit("setSqueezes", reportLists);
+            console.log(`squeeze: %o`, data.reports); //reportLists);
+            commit("setSqueezes", data.reports); //reportLists);
 
             commit("setInitDataFinished");
             tmpIndexMap = null;

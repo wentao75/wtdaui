@@ -173,6 +173,8 @@ async function prepareStockList() {
         //     }
         // }
         let reports = await search.readReports();
+        // 这里仅取出报告数据部分传入！
+        reports = reports && reports.reports;
 
         // log.info(
         //     `获得报告列表：${reports &&

@@ -43,13 +43,15 @@
                             :key="'2-' + rindex + '-' + sindex + '-' + index"
                         >
                             <template slot="title"
-                                ><el-badge :value="list.length" class="item"
-                                    >分组{{ index + 1 }}</el-badge
+                                ><el-badge
+                                    :value="list.data.length"
+                                    class="item"
+                                    >{{ list.label }}</el-badge
                                 ></template
                             >
                             <el-menu-item
                                 style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
-                                v-for="item in list"
+                                v-for="item in list.data"
                                 :index="item.ts_code"
                                 :key="item.ts_code"
                             >

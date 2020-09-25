@@ -175,43 +175,93 @@ export default new Vuex.Store({
                 commit("setDefaultStockCode", favList[0].ts_code);
             }
 
-            let squeezeList = [[], []];
-            if (data && data.reports && data.reports.squeeze) {
-                if (data.reports.squeeze.buyList) {
-                    for (let list of data.reports.squeeze.buyList) {
-                        if (_.isEmpty(list)) continue;
-                        let tmpList = [];
-                        for (let code of list) {
-                            let stock = tmpStockMap.get(code);
-                            if (stock) {
-                                tmpList.push({
-                                    ts_code: code,
-                                    name: stock.name
+            // 这里需要调整报告数据的格式，同时将必要的数据填入
+            let reportLists = [];
+            if (data && data.reports) {
+                let reports = data.reports;
+                if (!_.isNil(reports)) {
+                    for (let rpt in reports) {
+                        if (rpt === "updateTime") continue;
+                        let rptData = reports[rpt];
+                        let dataLists = [];
+                        if (!_.isNil(rptData)) {
+                            for (let stateName in rptData) {
+                                let dataList = rptData[stateName];
+
+                                let tmpData = [];
+                                for (let list of dataList) {
+                                    if (_.isEmpty(list)) continue;
+                                    let tmpList = [];
+                                    for (let code of list) {
+                                        let stock = tmpStockMap.get(code);
+                                        if (stock) {
+                                            tmpList.push({
+                                                ts_code: code,
+                                                name: stock.name
+                                            });
+                                        }
+                                    }
+                                    tmpData.push(tmpList);
+                                    console.log(
+                                        `报告数据：${rpt}-${stateName}[${tmpData.length -
+                                            1}] ${tmpList.length}条`
+                                    );
+                                }
+
+                                dataLists.push({
+                                    label: stateName,
+                                    data: tmpData
                                 });
+                                // console.log(
+                                //     `报告数据：${rpt}-${stateName} ${tmpData.length}条`
+                                // );
                             }
                         }
-                        squeezeList[0].push(tmpList);
-                    }
-                }
-                if (data.reports.squeeze.readyList) {
-                    for (let list of data.reports.squeeze.readyList) {
-                        if (_.isEmpty(list)) continue;
-                        let tmpList = [];
-                        for (let code of list) {
-                            let stock = tmpStockMap.get(code);
-                            if (stock) {
-                                tmpList.push({
-                                    ts_code: code,
-                                    name: stock.name
-                                });
-                            }
-                        }
-                        squeezeList[1].push(tmpList);
+                        reportLists.push({
+                            label: rpt,
+                            data: dataLists
+                        });
                     }
                 }
             }
-            console.log(`squeeze: %o`, squeezeList);
-            commit("setSqueezes", squeezeList);
+
+            // let squeezeList = [[], []];
+            // if (data && data.reports && data.reports.squeeze) {
+            //     if (data.reports.squeeze.buyList) {
+            //         for (let list of data.reports.squeeze.buyList) {
+            //             if (_.isEmpty(list)) continue;
+            //             let tmpList = [];
+            //             for (let code of list) {
+            //                 let stock = tmpStockMap.get(code);
+            //                 if (stock) {
+            //                     tmpList.push({
+            //                         ts_code: code,
+            //                         name: stock.name
+            //                     });
+            //                 }
+            //             }
+            //             squeezeList[0].push(tmpList);
+            //         }
+            //     }
+            //     if (data.reports.squeeze.readyList) {
+            //         for (let list of data.reports.squeeze.readyList) {
+            //             if (_.isEmpty(list)) continue;
+            //             let tmpList = [];
+            //             for (let code of list) {
+            //                 let stock = tmpStockMap.get(code);
+            //                 if (stock) {
+            //                     tmpList.push({
+            //                         ts_code: code,
+            //                         name: stock.name
+            //                     });
+            //                 }
+            //             }
+            //             squeezeList[1].push(tmpList);
+            //         }
+            //     }
+            // }
+            console.log(`squeeze: %o`, reportLists);
+            commit("setSqueezes", reportLists);
 
             commit("setInitDataFinished");
             tmpIndexMap = null;

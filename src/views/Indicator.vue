@@ -21,18 +21,26 @@
                     </el-menu-item>
                     <!-- </el-menu-item-group> -->
                 </el-submenu>
-                <el-submenu index="2">
+                <el-submenu
+                    v-for="(report, rindex) in $store.state.squeezeList"
+                    :index="'2-' + rindex"
+                    :key="'2-' + rindex"
+                >
                     <template slot="title">
                         <i class="el-icon-finished"></i>
-                        <span slot="title">鸡排</span>
+                        <span slot="title">{{ report.label }}</span>
                     </template>
-                    <el-submenu index="2-1">
-                        <template slot="title">买入</template>
+
+                    <el-submenu
+                        v-for="(state, sindex) in report.data"
+                        :index="'2-' + rindex + '-' + sindex"
+                        :key="'2-' + rindex + '-' + sindex"
+                    >
+                        <template slot="title">{{ state.label }}</template>
                         <el-submenu
-                            :index="'2-1-' + index"
-                            v-for="(list, index) in $store.state.squeezeList &&
-                                $store.state.squeezeList[0]"
-                            :key="'2-1-' + index"
+                            v-for="(list, index) in state.data"
+                            :index="'2-' + rindex + '-' + sindex + '-' + index"
+                            :key="'2-' + rindex + '-' + sindex + '-' + index"
                         >
                             <template slot="title"
                                 ><el-badge :value="list.length" class="item"
@@ -41,38 +49,8 @@
                             >
                             <el-menu-item
                                 style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
-                                :index="item.ts_code"
                                 v-for="item in list"
-                                :key="item.ts_code"
-                            >
-                                <el-col>
-                                    <span class="stockcode">{{
-                                        item.ts_code
-                                    }}</span>
-                                    <span class="stockname">{{
-                                        item.name
-                                    }}</span>
-                                </el-col>
-                            </el-menu-item>
-                        </el-submenu>
-                    </el-submenu>
-                    <el-submenu index="2-2">
-                        <template slot="title">准备</template>
-                        <el-submenu
-                            :index="'2-2-' + index"
-                            v-for="(list, index) in $store.state.squeezeList &&
-                                $store.state.squeezeList[1]"
-                            :key="'2-2-' + index"
-                        >
-                            <template slot="title">
-                                <el-badge :value="list.length" class="item">
-                                    分组{{ index + 1 }}</el-badge
-                                ></template
-                            >
-                            <el-menu-item
-                                style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
                                 :index="item.ts_code"
-                                v-for="item in list"
                                 :key="item.ts_code"
                             >
                                 <el-col>

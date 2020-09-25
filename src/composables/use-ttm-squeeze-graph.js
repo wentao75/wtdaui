@@ -56,7 +56,7 @@ export default function(store, graphElementId, props) {
         // [hist1, hist2, hist3, hist4, hist5, hist6, macd6]
         let ttmwaveData = indicators.TTMWave.calculate(dailyData, {
             source,
-            n: 5,
+            n: 8, //5,
             ma: 21,
             la: 34,
             mb: 55,

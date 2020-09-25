@@ -173,12 +173,13 @@ async function prepareStockList() {
         //     }
         // }
         let reports = await search.readReports();
-        log.info(
-            `获得报告列表：${reports &&
-                reports.squeeze &&
-                reports.squeeze.buyList &&
-                reports.squeeze.buyList.length}`
-        );
+
+        // log.info(
+        //     `获得报告列表：${reports &&
+        //         reports.squeeze &&
+        //         reports.squeeze.buyList &&
+        //         reports.squeeze.buyList.length}`
+        // );
         return {
             stock: stockListData.data,
             index: indexListData.data,

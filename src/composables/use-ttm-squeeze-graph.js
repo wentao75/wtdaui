@@ -13,9 +13,10 @@ export default function(store, graphElementId, props) {
     let dailyChart = null;
 
     const splitData = rawData => {
-        var categoryData = [];
+        let categoryData = [];
         // K 线
-        var values = [];
+        let values = [];
+        let volumes = [];
         // let changes = [];
         let squeezeFlags = [];
         // let mm = []; // 动量数据
@@ -125,6 +126,12 @@ export default function(store, graphElementId, props) {
                 scalper[i][1]
             ]);
 
+            volumes.push([
+                i, // dailyData[i].trade_date,
+                dailyData[i].vol,
+                dailyData[i].close >= dailyData[i].open ? 1 : 0
+            ]);
+
             if (squeezeData[6][i] === indicators.SQUEEZE.states.READY) {
                 squeezeFlags[i] = 0;
             } else {
@@ -139,9 +146,11 @@ export default function(store, graphElementId, props) {
             ];
         }
 
+        // console.log(`数据准备完毕！ ${volumes}`);
         return {
             categoryData: categoryData,
             values: values,
+            volumes,
             ttmwave: ttmwaveData,
             squeeze: squeezeData,
             scalper,
@@ -311,12 +320,13 @@ export default function(store, graphElementId, props) {
     const getGraphOption = data => {
         // 这里需要计算一下zoom的显示范围
         let dataLen = data && data.values ? data.values.length : 0;
-        let start = 100 / dataLen;
+        let start = dataLen === 0 ? 0 : 100 / dataLen;
         if (start >= 1) {
             start = 0;
         } else {
             start = 100 - Number((start * 100).toFixed(2));
         }
+        // console.log(`计算显示范围：${dataLen}, ${start}`);
         let barGap = "-100%";
         return {
             backgroundColor: "#000",
@@ -386,6 +396,7 @@ export default function(store, graphElementId, props) {
                     let paramEma50;
                     let paramEma8;
                     let paramEma21;
+                    let paramVolume;
                     params.forEach(param => {
                         // if (param.seriesIndex >= 1 && param.seriesIndex <= 3) {
                         //     paramKC[param.seriesIndex - 1] = param;
@@ -417,6 +428,8 @@ export default function(store, graphElementId, props) {
                             paramEma21 = param;
                         } else if (param.seriesIndex === 16 - 5) {
                             paramEma50 = param;
+                        } else if (param.seriesIndex === 17 - 5) {
+                            paramVolume = param;
                         }
                     });
 
@@ -432,10 +445,14 @@ export default function(store, graphElementId, props) {
                             ", " +
                             (paramEma50 && paramEma50.data) +
                             "] <br/>",
-                        "开: " +
-                            (paramK && paramK.data && paramK.data[1]) +
-                            " 收: " +
+                        "收: " +
                             (paramK && paramK.data && paramK.data[2]) +
+                            " 开: " +
+                            (paramK && paramK.data && paramK.data[1]) +
+                            " 量: " +
+                            (paramVolume &&
+                                paramVolume.data &&
+                                paramVolume.data[1]) +
                             "<br/>",
                         "高: " +
                             (paramK && paramK.data && paramK.data[4]) +
@@ -512,6 +529,7 @@ export default function(store, graphElementId, props) {
             xAxis: [
                 {
                     type: "category",
+                    gridIndex: 0,
                     data: data.categoryData,
                     scale: true,
                     boundaryGap: false,
@@ -604,7 +622,10 @@ export default function(store, graphElementId, props) {
             ],
             yAxis: [
                 {
+                    // 0
                     scale: true,
+                    gridIndex: 0,
+                    position: "left",
                     splitLine: {
                         show: true,
                         lineStyle: {
@@ -614,6 +635,7 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
+                    // 1
                     scale: true,
                     gridIndex: 1,
                     splitNumber: 2,
@@ -629,6 +651,7 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
+                    // 2
                     scale: true,
                     gridIndex: 2,
                     splitNumber: 2,
@@ -644,6 +667,7 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
+                    // 3
                     scale: true,
                     gridIndex: 3,
                     splitNumber: 2,
@@ -659,6 +683,7 @@ export default function(store, graphElementId, props) {
                     }
                 },
                 {
+                    // 4
                     scale: true,
                     gridIndex: 4,
                     splitNumber: 2,
@@ -672,6 +697,16 @@ export default function(store, graphElementId, props) {
                             type: "dashed"
                         }
                     }
+                },
+                {
+                    // 5
+                    scale: true,
+                    gridIndex: 0,
+                    position: "right",
+                    max: function(value) {
+                        return 3 * value.max;
+                    },
+                    splitLine: { show: false }
                 }
             ],
             dataZoom: [
@@ -936,6 +971,19 @@ export default function(store, graphElementId, props) {
                         opacity: 0.6,
                         width: 2
                     }
+                },
+                {
+                    // 17
+                    name: "成交量",
+                    type: "bar",
+                    data: data && data.volumes,
+                    symbol: "none",
+                    itemStyle: {
+                        opacity: 0.3
+                    },
+                    zLevel: -99,
+                    xAxisIndex: 0,
+                    yAxisIndex: 5
                 }
             ],
             visualMap: [
@@ -956,7 +1004,7 @@ export default function(store, graphElementId, props) {
                     show: false,
                     seriesIndex: 1,
                     dimensions: 2
-                }
+                },
                 // {
                 //     type: "piecewise",
                 //     pieces: [
@@ -972,7 +1020,23 @@ export default function(store, graphElementId, props) {
                 //     show: false,
                 //     seriesIndex: 6,
                 //     dimensions: 0
-                // }
+                // },
+                {
+                    type: "piecewise",
+                    pieces: [
+                        {
+                            value: 1,
+                            color: "#ec0000"
+                        },
+                        {
+                            value: 0,
+                            color: "#00da3c"
+                        }
+                    ],
+                    show: false,
+                    seriesIndex: 17 - 5,
+                    dimensions: 2
+                }
             ]
         };
     };
@@ -1031,12 +1095,13 @@ export default function(store, graphElementId, props) {
         series[9 - 5].data = data && data.ttmwave[0];
         series[10 - 5].data = data && data.ttmwave[3];
         series[11 - 5].data = data && data.ttmwave[2];
-        // series[12].data = data && data.ttmwave[5];
+        // series[12-5].data = data && data.ttmwave[5];
         series[12 - 5].data = data && data.ttmwave[6];
         series[13 - 5].data = data && data.ttmwave[4];
         series[14 - 5].data = data && data.ema8;
         series[15 - 5].data = data && data.ema21;
         series[16 - 5].data = data && data.ema50;
+        series[17 - 5].data = data && data.volumes;
 
         xAxis[0].data = data && data.categoryData;
         xAxis[1].data = data && data.categoryData;

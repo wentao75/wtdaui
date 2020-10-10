@@ -104,7 +104,7 @@ async function readXueqiuQuotec(tsCode) {
             close: rtData.current,
             change: rtData.chg,
             pct_chg: rtData.percent,
-            vol: rtData.volumn,
+            vol: rtData.volume / 100,
             amount: rtData.amount,
             prevadj_factor: 1,
             update_time: rtData.timestamp

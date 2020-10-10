@@ -193,48 +193,82 @@ export default function(store, graphElementId, props) {
         }
         // console.log(`params: %o， api, %o`, params, api);
 
-        // let hPoint;
-        // let lPoint;
-        // if (api.value(1) > api.value(2)) {
-        //     hPoint = openPoint;
-        //     lPoint = closePoint;
-        // } else {
-        //     hPoint = closePoint;
-        //     lPoint = openPoint;
-        // }
+        // For K线
+        let hPoint;
+        let lPoint;
+        if (api.value(1) > api.value(2)) {
+            hPoint = openPoint;
+            lPoint = closePoint;
+        } else {
+            hPoint = closePoint;
+            lPoint = openPoint;
+        }
         let item = {
             type: "group",
             children: [
+                // 美国线
+                // {
+                //     type: "line",
+                //     shape: {
+                //         x1: lowPoint[0],
+                //         y1: lowPoint[1],
+                //         x2: highPoint[0],
+                //         y2: highPoint[1]
+                //     },
+                //     style: style
+                // },
+                // {
+                //     type: "line",
+                //     shape: {
+                //         x1: openPoint[0],
+                //         y1: openPoint[1],
+                //         x2: openPoint[0] - halfWidth,
+                //         y2: openPoint[1]
+                //     },
+                //     style: style
+                // },
+                // {
+                //     type: "line",
+                //     shape: {
+                //         x1: closePoint[0],
+                //         y1: closePoint[1],
+                //         x2: closePoint[0] + halfWidth,
+                //         y2: closePoint[1]
+                //     },
+                //     style: style
+                // },
+                // K 线
                 {
                     type: "line",
                     shape: {
                         x1: lowPoint[0],
                         y1: lowPoint[1],
+                        x2: lPoint[0],
+                        y2: lPoint[1]
+                    },
+                    style: style
+                },
+                {
+                    type: "line",
+                    shape: {
+                        x1: hPoint[0],
+                        y1: hPoint[1],
                         x2: highPoint[0],
                         y2: highPoint[1]
                     },
                     style: style
                 },
                 {
-                    type: "line",
+                    type: "rect",
                     shape: {
-                        x1: openPoint[0],
-                        y1: openPoint[1],
-                        x2: openPoint[0] - halfWidth,
-                        y2: openPoint[1]
+                        x: hPoint[0] - halfWidth,
+                        y: hPoint[1],
+                        width: halfWidth * 2,
+                        height: lPoint[1] - hPoint[1]
                     },
                     style: style
                 },
-                {
-                    type: "line",
-                    shape: {
-                        x1: closePoint[0],
-                        y1: closePoint[1],
-                        x2: closePoint[0] + halfWidth,
-                        y2: closePoint[1]
-                    },
-                    style: style
-                },
+                // scalper 三角标记
                 {
                     type: "polyline",
                     invisible: invisibleUp,
@@ -279,36 +313,6 @@ export default function(store, graphElementId, props) {
                 }
             ]
             //     children: [
-            //     {
-            //         type: "line",
-            //         shape: {
-            //             x1: lowPoint[0],
-            //             y1: lowPoint[1],
-            //             x2: lPoint[0],
-            //             y2: lPoint[1]
-            //         },
-            //         style: style
-            //     },
-            //     {
-            //         type: "line",
-            //         shape: {
-            //             x1: hPoint[0],
-            //             y1: hPoint[1],
-            //             x2: highPoint[0],
-            //             y2: highPoint[1]
-            //         },
-            //         style: style
-            //     },
-            //     {
-            //         type: "rect",
-            //         shape: {
-            //             x: hPoint[0] - halfWidth,
-            //             y: hPoint[1],
-            //             width: halfWidth * 2,
-            //             height: lPoint[1] - hPoint[1]
-            //         },
-            //         style: style
-            //     }
             // ]
         };
         // if (flagChild) {
@@ -743,8 +747,8 @@ export default function(store, graphElementId, props) {
                         color0: props.params.downColor,
                         borderColor: null,
                         borderColor0: null,
-                        lineWidth: 2,
-                        borderWidth: 2
+                        lineWidth: 1,
+                        borderWidth: 1
                     }
                 },
                 // {

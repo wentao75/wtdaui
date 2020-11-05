@@ -31,16 +31,16 @@ export default function(store, graphElementId, props) {
         let digits = 3;
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
             source,
-            ma: "ema",
+            ma: "ma", //"ema",
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,
             mt: "MTM", // "MTM"
             mn: 12,
             mm: 1,
-            tn: 5,
-            tm: 21,
-            tl: 34,
+            tn: 8,
+            tm: 34, //21,
+            tl: 55, //34,
             // mmsource: "hl",
             digits
         });

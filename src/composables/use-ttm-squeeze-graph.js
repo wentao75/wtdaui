@@ -28,7 +28,8 @@ export default function(store, graphElementId, props) {
         let dailyData = rawData.data;
         utils.checkTradeData(dailyData);
 
-        let source = "close";
+        // let source = "close";
+        let source = "ohlc";
         // let mmsource = "hl";
         console.log(`params: %o`, props.params);
         let digits = 3;
@@ -41,16 +42,16 @@ export default function(store, graphElementId, props) {
         // 基础的Squeeze数据
         let squeezeData = indicators.SQUEEZE.calculate(dailyData, {
             source,
-            ma: "ema",
+            ma: "ma",
             n: (props && props.params.n) || 20,
             bm: (props && props.params.bm) || 2,
             km: (props && props.params.m) || 1.5,
             mt: "MTM", // "MTM"
             mn: 12,
             mm: 1,
-            tn: 5,
-            tm: 21,
-            tl: 34,
+            tn: 8,
+            tm: 34,
+            tl: 55,
             digits
         });
 
@@ -58,12 +59,12 @@ export default function(store, graphElementId, props) {
         let ttmwaveData = indicators.TTMWave.calculate(dailyData, {
             source,
             n: 8, //5,
-            ma: 21,
-            la: 34,
-            mb: 55,
-            lb: 89,
-            mc: 144,
-            lc: 233,
+            ma: 34, //21,
+            la: 55, //34,
+            mb: 89, //55,
+            lb: 144, //89,
+            mc: 233, //144,
+            lc: 377, //233,
             digits
         });
 

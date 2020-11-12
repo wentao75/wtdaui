@@ -53,7 +53,16 @@
                                 style="line-height: 24px; height: 26px; padding-left: 10px; padding-right: 24px;"
                                 v-for="item in list.data"
                                 :index="item.ts_code"
-                                :key="item.ts_code"
+                                :key="
+                                    '2-' +
+                                        rindex +
+                                        '-' +
+                                        sindex +
+                                        '-' +
+                                        index +
+                                        '-' +
+                                        item.ts_code
+                                "
                             >
                                 <el-col>
                                     <span class="stockcode">{{
